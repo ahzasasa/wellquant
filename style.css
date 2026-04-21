@@ -1,0 +1,218 @@
+/* style.css - Spesifikasi Estetika WellQuant */
+
+body {
+    font-family: 'Poppins', sans-serif;
+    margin: 0;
+    background-color: #F4F7FE; 
+    display: flex;
+    color: #01120A;
+}
+
+.section-title { font-size: 1.1rem; color: #01120A; font-weight: 600; margin-top: 0; margin-bottom: 20px; }
+
+/* Struktur Sidebar */
+.sidebar {
+    width: 260px; background-color: #FFFFFF; height: 100vh;
+    padding: 30px 20px; box-sizing: border-box; position: fixed;
+    box-shadow: 5px 0 20px rgba(0,0,0,0.02); display: flex; flex-direction: column;
+}
+
+.logo-area { display: flex; align-items: center; margin-bottom: 40px; }
+.logo-icon { 
+    background: #237FEA; color: white; width: 40px; height: 40px; 
+    border-radius: 12px; display: flex; align-items: center; justify-content: center;
+    font-weight: bold; margin-right: 15px; font-size: 1.2rem;
+}
+.sidebar h2 { font-size: 1.4rem; font-weight: 700; margin: 0; }
+.menu-label { font-size: 0.8rem; color: #A0AEC0; font-weight: 600; text-transform: uppercase; margin-bottom: 15px; letter-spacing: 1px; }
+
+.sidebar ul { list-style: none; padding: 0; margin: 0; flex-grow: 1; }
+.sidebar li { 
+    margin-bottom: 10px; cursor: pointer; transition: all 0.2s ease-in-out;
+    padding: 12px 18px; border-radius: 12px; color: #8e9ca9; font-weight: 500;
+    display: flex; align-items: center;
+}
+.sidebar li:hover { color: #237FEA; background-color: rgba(35, 127, 234, 0.04); }
+.sidebar li.active { background-color: #F0F6FF; color: #237FEA; font-weight: 600; }
+
+.user-profile { display: flex; align-items: center; padding-top: 20px; border-top: 1px solid #f0f0f0; }
+.avatar { background: #08C7E1; color: white; width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; margin-right: 15px; }
+.user-info strong { display: block; font-size: 0.9rem; }
+.user-info span { font-size: 0.75rem; color: #8e9ca9; }
+
+/* Area Utama */
+.main-content { margin-left: 260px; flex-grow: 1; padding: 40px; box-sizing: border-box; max-width: 1200px; }
+.header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; }
+.btn-sync { background-color: #237FEA; color: white; border: none; padding: 10px 25px; border-radius: 20px; cursor: pointer; font-weight: 600; font-family: 'Poppins', sans-serif; transition: 0.3s; }
+.btn-sync:hover { background-color: #1b68c2; }
+
+/* Panel & Kartu */
+.panel { background-color: #FFFFFF; padding: 30px; border-radius: 24px; box-shadow: 0 10px 30px rgba(0,0,0,0.03); margin-bottom: 30px; }
+.kpi-container { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-bottom: 30px; }
+.kpi-card { background-color: #FFFFFF; padding: 25px; border-radius: 24px; box-shadow: 0 10px 30px rgba(0,0,0,0.03); display: flex; align-items: center; gap: 15px; }
+.kpi-icon { width: 55px; height: 55px; border-radius: 16px; display: flex; align-items: center; justify-content: center; font-size: 1.8rem; }
+.kpi-title { font-size: 0.85rem; color: #a0aec0; font-weight: 500; margin-top: 5px; }
+.kpi-value { font-size: 1.5rem; font-weight: 700; color: #01120A; line-height: 1.2; }
+
+/* Bagan & Tabel */
+.chart-wrapper { width: 100%; max-width: 400px; margin: 0 auto; }
+.kpi-table { width: 100%; border-collapse: collapse; text-align: left; font-size: 0.95rem; }
+.kpi-table th { padding: 15px 10px; border-bottom: 2px solid #e2e8f0; color: #8e9ca9; font-weight: 600; }
+.kpi-table td { padding: 15px 10px; border-bottom: 1px solid #f0f0f0; }
+
+/* Formulir Input & Simulator */
+.input-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+.input-group label { display: block; font-size: 0.85rem; margin-bottom: 8px; color: #8e9ca9; font-weight: 500;}
+.input-group input { width: 100%; padding: 12px 15px; box-sizing: border-box; border: 1px solid #e2e8f0; border-radius: 12px; font-family: 'Poppins', sans-serif; font-weight: 500; color: #01120A; background: #f8fafc; outline: none; transition: 0.3s; }
+.input-group input:focus { border-color: #237FEA; background: white; }
+
+.simulator-box { background: #FFFFFF; padding: 30px; border-radius: 24px; box-shadow: 0 10px 30px rgba(0,0,0,0.03); }
+.custom-slider { width: 100%; margin: 15px 0; accent-color: #237FEA; }
+
+.recommender-panel { display: flex; gap: 20px; align-items: flex-start; background: linear-gradient(to right, #ffffff, #f0f7ff); border-left: 6px solid #237FEA; padding: 25px; border-radius: 16px; box-shadow: 0 10px 30px rgba(0,0,0,0.03); }
+.recommender-icon { font-size: 2rem; background: white; width: 60px; height: 60px; display: flex; align-items: center; justify-content: center; border-radius: 16px; box-shadow: 0 5px 15px rgba(0,0,0,0.05); }
+
+@media print { .sidebar, .header-actions { display: none; } .main-content { margin-left: 0; padding: 0; } body { background-color: white; } .panel { box-shadow: none; border: 1px solid #eee; } }
+
+
+/* ========================================================= */
+/* GRID LAYOUT DASBOR (Pemetaan Matriks 3 Kolom - Responsif) */
+/* ========================================================= */
+.dashboard-grid {
+    display: grid;
+    /* Menggunakan rasio fleksibel (fr) alih-alih piksel kaku agar otomatis muat di layar */
+    grid-template-columns: 1.2fr 2fr 1.3fr; 
+    gap: 20px;
+    align-items: start;
+    width: 100%;
+}
+
+/* Aturan krusial: Mencegah kanvas Chart.js memaksakan grid melebar */
+.grid-col-left, .grid-col-center, .grid-col-right {
+    min-width: 0; 
+}
+
+/* Kolom Kiri: Kartu KPI Mini */
+.grid-col-left { display: flex; flex-direction: column; gap: 15px; }
+
+.kpi-mini-card {
+    background: #FFFFFF; border-radius: 16px; padding: 15px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.02); display: flex;
+    justify-content: space-between; align-items: center;
+    border: 1px solid #f0f4f8;
+}
+
+.kpi-info { display: flex; flex-direction: column; max-width: 65%; }
+.kpi-label { font-size: 0.65rem; color: #8e9ca9; font-weight: 600; text-transform: uppercase; margin-bottom: 5px; }
+.kpi-val { font-size: 1.15rem; font-weight: 700; color: #01120A; line-height: 1.1; margin-bottom: 5px; white-space: nowrap; }
+.kpi-trend { font-size: 0.65rem; font-weight: 500; }
+.kpi-trend.positive { color: #2ecc71; }
+.kpi-trend.negative { color: #e74c3c; }
+
+/* Sedikit mengecilkan area sparkline agar proporsional */
+.kpi-sparkline { width: 75px; height: 35px; flex-shrink: 0; }
+
+/* Kolom Tengah & Kanan */
+.grid-col-center { display: flex; flex-direction: column; gap: 20px; }
+.grid-col-right { display: flex; flex-direction: column; gap: 20px; }
+
+/* Modifikasi Panel untuk Grid */
+.panel-flex { margin-bottom: 0; display: flex; flex-direction: column; height: 100%; box-sizing: border-box; padding: 20px; }
+.panel-flex .section-title { font-size: 0.95rem; border-bottom: none; margin-bottom: 15px; color: #4a5568; }
+
+/* Tabel Risiko Tinggi */
+.risk-table { font-size: 0.8rem; width: 100%; border-collapse: collapse; }
+.risk-table th { padding: 10px 8px; background: #f8fafc; color: #4a5568; text-align: left; font-weight: 600; border-bottom: 2px solid #e2e8f0; }
+.risk-table td { padding: 10px 8px; border-bottom: 1px solid #f0f4f8; }
+.risk-table tr:hover { background: #f0f6ff; }
+
+/* ========================================================= */
+/* BEHAVIORAL TRACKER - CALENDAR HEATMAP                     */
+/* ========================================================= */
+.heatmap-container {
+    padding: 10px 0;
+    width: 100%;
+}
+
+/* Mengatur grid persis 7 kolom untuk 7 hari dalam seminggu */
+.calendar-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 8px;
+    max-width: 400px; /* Menjaga agar kalender tidak terlalu melebar */
+}
+
+/* Header Hari (Min, Sen, dst.) */
+.cal-day-header {
+    text-align: center;
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: #8e9ca9;
+    padding-bottom: 5px;
+}
+
+/* Kotak Kosong untuk offset tanggal awal bulan */
+.cal-empty {
+    width: 100%;
+}
+
+/* Kotak Tanggal Utama */
+.heat-box {
+    width: 100%;
+    aspect-ratio: 1 / 1; /* Memastikan bentuknya persegi sempurna */
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.85rem;
+    font-weight: 500;
+    transition: all 0.2s ease-in-out;
+    cursor: pointer;
+    box-sizing: border-box;
+}
+
+.heat-box:hover { 
+    transform: scale(1.15); 
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15); 
+    z-index: 10; 
+}
+
+/* Tingkatan Warna (Skala Panas) dan Kontras Tipografi */
+.heat-lvl-0 { background: #f8fafc; color: #a0aec0; border: 1px solid #e2e8f0; } /* 0 Absen */
+.heat-lvl-1 { background: #ffcdd2; color: #b71c1c; font-weight: 700; border: 1px solid #ffcdd2; } /* 1 Absen */
+.heat-lvl-2 { background: #e57373; color: #ffffff; font-weight: 700; border: 1px solid #e57373; } /* 2 Absen */
+.heat-lvl-3 { background: #ef5350; color: #ffffff; font-weight: 700; border: 1px solid #ef5350; } /* 3 Absen */
+.heat-lvl-4 { background: #b71c1c; color: #ffffff; font-weight: 700; border: 1px solid #b71c1c; } /* >3 Absen */
+
+.heatmap-legend { display: flex; align-items: center; gap: 10px; margin-top: 15px; }
+.badge-kritis { background: #ffcdd2; color: #b71c1c; padding: 4px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: 600; }
+.badge-aman { background: #d4edda; color: #155724; padding: 4px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: 600; }
+
+.heatmap-legend .heat-box {
+    width: 24px;           /* Mengunci lebar kotak legenda */
+    height: 24px;          /* Mengunci tinggi kotak legenda */
+    aspect-ratio: auto;    /* Membatalkan rasio kalender */
+    border-radius: 4px;
+    cursor: default;       /* Kursor panah biasa (bukan tangan) */
+}
+
+.heatmap-legend .heat-box:hover {
+    transform: none;       /* Mematikan efek membesar saat di-hover */
+    box-shadow: none;
+    z-index: 1;
+}
+
+/* ========================================================= */
+/* NAVIGASI BULAN HEATMAP                                    */
+/* ========================================================= */
+.month-nav {
+    display: flex; align-items: center; gap: 5px;
+    background: #f8fafc; padding: 4px 8px;
+    border-radius: 8px; border: 1px solid #e2e8f0;
+}
+.btn-nav {
+    background: transparent; border: none; cursor: pointer;
+    color: #4a5568; font-weight: bold; font-size: 0.9rem;
+    padding: 4px 8px; border-radius: 4px; transition: 0.2s;
+}
+.btn-nav:hover { background: #e2e8f0; color: #01120A; }
