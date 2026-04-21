@@ -58,8 +58,6 @@ async function fetchDatabaseData() {
             // Perbarui Dasbor Eksekutif secara langsung
             updateDashboardFaktual(dbRealData);
             
-            // Sinkronisasikan angka awal ke Kalkulator ROI (hanya 1 kali)
-            syncToCalculatorInputs(dbRealData);
         }
     } catch (error) {
         console.error("[!] Gagal menarik data real-time dari API:", error);
@@ -271,6 +269,22 @@ function hitungKalkulatorManual() {
     }
 }
 
+function resetKalkulator() {
+    // Mengosongkan seluruh kotak input
+    document.getElementById('inpKaryawan').value = '';
+    document.getElementById('inpGaji').value = '';
+    document.getElementById('inpAbsensi').value = '';
+    document.getElementById('inpTurnover').value = '';
+    document.getElementById('inpRekrutmen').value = '';
+    document.getElementById('inpInvestasi').value = '';
+    
+    // Menyembunyikan kembali panel hasil kalkulasi
+    const panelHasil = document.getElementById('kalkulator-hasil');
+    if (panelHasil) {
+        panelHasil.style.display = 'none';
+    }
+}
+
 // ==========================================
 // 7. LOGIKA SIMULATOR INTERAKTIF
 // ==========================================
@@ -374,10 +388,11 @@ window.onload = function() {
 // 9. LOGIKA EKSKLUSIF BEHAVIORAL TRACKER
 // ==========================================
 
-// Variabel Global Baru untuk Riwayat Kalender
+// Variabel Global untuk Riwayat Kalender & Pie Chart
 let currentMonth = 3; // Index Bulan: 3 = April
 let currentYear = 2026;
-let globalTrenHarian = []; // Menyimpan data di RAM agar transisi bulan secepat kilat
+let globalTrenHarian = []; 
+let globalSemuaPresensi = []; // Menyimpan data mentah untuk filter Pie Chart
 
 async function fetchBehavioralData() {
     try {
@@ -386,10 +401,11 @@ async function fetchBehavioralData() {
 
         if (result.status === 'success') {
             const bData = result.data;
-            globalTrenHarian = bData.tren_harian; // Simpan secara global
+            globalTrenHarian = bData.tren_harian; 
+            globalSemuaPresensi = bData.semua_presensi; // Simpan data mentah
             
-            renderPieRasio(bData.rasio_absen);
-            renderHeatmap(); // Gambar kalender
+            renderPieDinamis(); // Kalkulasi Pie Chart berdasarkan bulan terpilih
+            renderHeatmap(); 
             renderTabelKaryawan(bData.tabel_karyawan);
         }
     } catch (error) {
@@ -407,16 +423,42 @@ function ubahBulan(arah) {
         currentMonth = 0; // Maju ke Januari tahun depan
         currentYear++;
     }
-    renderHeatmap(); // Gambar ulang kalender setiap tombol diklik
+    
+    // Render ulang KEDUA grafik saat tombol diklik
+    renderHeatmap(); 
+    renderPieDinamis(); 
 }
 
-// 1. Render Pie Chart Rasio
+// Fungsi Baru: Filter Data Pie Chart Sesuai Bulan
+function renderPieDinamis() {
+    // Siapkan wadah rekapitulasi awal (0)
+    let rekap = { 'Sakit': 0, 'Alpha': 0, 'Izin': 0, 'Cuti': 0 };
+
+    // Buat format awalan string bulan (contoh: "2026-04" atau "2026-03")
+    let monthStr = (currentMonth + 1).toString().padStart(2, '0');
+    let prefixCari = `${currentYear}-${monthStr}`;
+
+    // Loop semua data dari database, saring HANYA yang bulannya cocok
+    globalSemuaPresensi.forEach(item => {
+        if (item.tanggal.startsWith(prefixCari)) {
+            if (rekap[item.status_kehadiran] !== undefined) {
+                rekap[item.status_kehadiran]++;
+            } else {
+                rekap[item.status_kehadiran] = 1; // Fallback jika ada status baru
+            }
+        }
+    });
+
+    // Kirim hasil saringan ke fungsi penggambar Chart.js
+    renderPieRasio(rekap);
+}
+
+// 1. Render Pie Chart Rasio (Biarkan fungsi bawaannya tetap utuh)
 function renderPieRasio(rasioData) {
     const canvasId = 'pieAbsensi';
     const ctx = document.getElementById(canvasId);
     if (!ctx || ctx.offsetParent === null) return;
 
-    // Default jika data kosong
     const sakit = rasioData['Sakit'] || 0;
     const alpha = rasioData['Alpha'] || 0;
     const izin = rasioData['Izin'] || 0; 

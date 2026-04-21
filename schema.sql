@@ -20,6 +20,7 @@ CREATE TABLE IF NOT EXISTS fact_presensi (
     id_karyawan VARCHAR(20),
     tanggal DATE NOT NULL,
     status_kehadiran VARCHAR(20) NOT NULL,
+    UNIQUE(id_karyawan, tanggal), -- <--- TAMBAHKAN BARIS INI
     FOREIGN KEY (id_karyawan) REFERENCES dim_karyawan(id_karyawan) ON DELETE CASCADE
 );
 

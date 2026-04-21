@@ -38,9 +38,9 @@ def ambil_metrik_dasbor():
         SELECT 
             COUNT(p.id_presensi) AS total_hari_absen,
             SUM(k.gaji_harian) AS total_upah_hilang
-        FROM fact_presensi p
-        JOIN dim_karyawan k ON p.id_karyawan = k.id_karyawan
-        WHERE p.status_kehadiran IN ('Sakit', 'Alpha')
+            FROM fact_presensi p
+            JOIN dim_karyawan k ON p.id_karyawan = k.id_karyawan
+            WHERE p.status_kehadiran IN ('Sakit', 'Alpha')
     '''
     cursor.execute(kueri_absensi)
     hasil_absensi = cursor.fetchone()
@@ -61,14 +61,13 @@ def ambil_metrik_dasbor():
     }
 
 def ambil_data_behavioral():
-    """Mengekstraksi data analitik perilaku (Heatmap & Tabel Individu)"""
+    """Mengekstraksi data analitik perilaku (Heatmap, Pie, & Tabel Individu)"""
     conn = get_db_connection()
     cursor = conn.cursor()
     
-    # 1. Rasio Jenis Ketidakhadiran
-    cursor.execute("SELECT status_kehadiran, COUNT(*) as jumlah FROM fact_presensi GROUP BY status_kehadiran")
-    rasio_mentah = cursor.fetchall()
-    rasio_absen = {row['status_kehadiran']: row['jumlah'] for row in rasio_mentah}
+    # 1. Data Presensi Mentah (Dikirim utuh agar bisa di-filter per bulan oleh JavaScript)
+    cursor.execute("SELECT tanggal, status_kehadiran FROM fact_presensi")
+    semua_presensi = [dict(row) for row in cursor.fetchall()]
     
     # 2. Distribusi Heatmap (Tanggal vs Jumlah Absen)
     cursor.execute('''
@@ -79,7 +78,7 @@ def ambil_data_behavioral():
     ''')
     tren_harian = [dict(row) for row in cursor.fetchall()]
     
-    # 3. Tabel Karyawan Kritis (Top 10 Absensi Tertinggi)
+    # 3. Tabel Karyawan Kritis (Top 10 Absensi Tertinggi Keseluruhan)
     cursor.execute('''
         SELECT k.nama_karyawan, k.departemen, k.status_aktif, COUNT(p.id_presensi) as total_absen
         FROM dim_karyawan k
@@ -92,7 +91,7 @@ def ambil_data_behavioral():
     
     conn.close()
     return {
-        "rasio_absen": rasio_absen,
+        "semua_presensi": semua_presensi,  # <- Kunci ini yang kita ubah
         "tren_harian": tren_harian,
         "tabel_karyawan": tabel_karyawan
     }
