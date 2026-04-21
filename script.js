@@ -1,16 +1,8 @@
-// =========================================================================
-// script.js - Logika Utama & Integrasi Real-Time WellQuant
-// =========================================================================
-
 // 1. STATE GLOBAL
-// Menyimpan instance grafik agar memori peramban tidak bocor saat diperbarui
 let chartInstances = {};
-// Sakelar untuk mencegah data input manual pengguna ditimpa oleh sinkronisasi otomatis
 let isCalculatorSynced = false; 
 
-// ==========================================
 // 2. FUNGSI UTILITAS UMUM
-// ==========================================
 function formatRupiah(angka) {
     return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(angka);
 }
@@ -21,9 +13,7 @@ function destroyChart(chartId) {
     }
 }
 
-// ==========================================
 // 3. NAVIGASI SINGLE PAGE APPLICATION (SPA)
-// ==========================================
 function switchPage(targetPageId, selectedElement) {
     const allPages = document.querySelectorAll('.page-content');
     allPages.forEach(page => page.style.display = 'none');
@@ -35,18 +25,14 @@ function switchPage(targetPageId, selectedElement) {
     menuItems.forEach(item => item.classList.remove('active'));
     selectedElement.classList.add('active');
 
-    // Memicu rendering ulang dan penarikan data saat pindah halaman
     if(targetPageId === 'page-simulator') {
         kalkulasiSimulator();
     } else if (targetPageId === 'page-behavioral') {
-        // Memaksa penarikan data saat menu Behavioral Tracker diklik
         fetchBehavioralData(); 
     }
 }
 
-// ==========================================
 // 4. INTEGRASI DATABASE & REAL-TIME POLLING
-// ==========================================
 async function fetchDatabaseData() {
     try {
         const response = await fetch('http://127.0.0.1:5000/api/v1/metrik-sdm');
@@ -54,10 +40,7 @@ async function fetchDatabaseData() {
 
         if (result.status === 'success') {
             const dbRealData = result.data;
-            
-            // Perbarui Dasbor Eksekutif secara langsung
             updateDashboardFaktual(dbRealData);
-            
         }
     } catch (error) {
         console.error("[!] Gagal menarik data real-time dari API:", error);
@@ -83,13 +66,11 @@ function syncToCalculatorInputs(data) {
     document.getElementById('inpInvestasi').value = Math.round(data.parameter_finansial.anggaran_investasi_rupiah);
     document.getElementById('inpRekrutmen').value = Math.round(data.parameter_finansial.biaya_rekrutmen_rupiah);
 
-    // Kunci sakelar agar pengguna bebas mengetik angka simulasi
     isCalculatorSynced = true; 
 }
 
-// ==========================================
+
 // 5. LOGIKA DASBOR EKSEKUTIF (GRID LAYOUT)
-// ==========================================
 function updateDashboardFaktual(data) {
     const populasi = data.metrik_karyawan.populasi_aktif;
     const resign = data.metrik_karyawan.jumlah_resign;
@@ -131,7 +112,7 @@ function updateDashboardFaktual(data) {
     renderTabelRisiko(turnoverRate, absensiRate);
 }
 
-// Visualisasi Dasbor (Aturan Tipografi: Normal Weight)
+// Visualisasi Dasbor
 function renderSparkline(canvasId, dataArr, color) {
     const ctx = document.getElementById(canvasId);
     if (!ctx || ctx.offsetParent === null) return;
@@ -237,9 +218,8 @@ function renderTabelRisiko(turnover, absensi) {
     tbl.innerHTML = htmlContent;
 }
 
-// ==========================================
+
 // 6. LOGIKA EKSKLUSIF KALKULATOR ROI (SANDBOX)
-// ==========================================
 function hitungKalkulatorManual() {
     const jmlKaryawan = parseFloat(document.getElementById('inpKaryawan').value) || 0;
     const gajiBulan = parseFloat(document.getElementById('inpGaji').value) || 0;
@@ -270,7 +250,6 @@ function hitungKalkulatorManual() {
 }
 
 function resetKalkulator() {
-    // Mengosongkan seluruh kotak input
     document.getElementById('inpKaryawan').value = '';
     document.getElementById('inpGaji').value = '';
     document.getElementById('inpAbsensi').value = '';
@@ -278,16 +257,13 @@ function resetKalkulator() {
     document.getElementById('inpRekrutmen').value = '';
     document.getElementById('inpInvestasi').value = '';
     
-    // Menyembunyikan kembali panel hasil kalkulasi
     const panelHasil = document.getElementById('kalkulator-hasil');
     if (panelHasil) {
         panelHasil.style.display = 'none';
     }
 }
 
-// ==========================================
 // 7. LOGIKA SIMULATOR INTERAKTIF
-// ==========================================
 function updateSlider() {
     const valElement = document.getElementById('valSlider');
     const sliderElement = document.getElementById('sliderTurnover');
@@ -369,30 +345,24 @@ function renderSimulasiChart(coiAwal, coiSimulasi) {
     });
 }
 
-// ==========================================
 // 8. INISIALISASI SAAT HALAMAN DIMUAT
-// ==========================================
 window.onload = function() {
-    // Tarik data pertama kali saat memuat peramban untuk semua dasbor
     fetchDatabaseData(); 
     fetchBehavioralData();
     
-    // AKTIFKAN REAL-TIME POLLING untuk kedua API setiap 5 detik
     setInterval(() => {
         fetchDatabaseData();
         fetchBehavioralData();
-    }, 5000); 
+    }, 10000); 
 };
 
-// ==========================================
-// 9. LOGIKA EKSKLUSIF BEHAVIORAL TRACKER
-// ==========================================
 
-// Variabel Global untuk Riwayat Kalender & Pie Chart
-let currentMonth = 3; // Index Bulan: 3 = April
+// 9. LOGIKA EKSKLUSIF BEHAVIORAL TRACKER
+
+let currentMonth = 3;
 let currentYear = 2026;
 let globalTrenHarian = []; 
-let globalSemuaPresensi = []; // Menyimpan data mentah untuk filter Pie Chart
+let globalSemuaPresensi = [];
 
 async function fetchBehavioralData() {
     try {
@@ -402,9 +372,9 @@ async function fetchBehavioralData() {
         if (result.status === 'success') {
             const bData = result.data;
             globalTrenHarian = bData.tren_harian; 
-            globalSemuaPresensi = bData.semua_presensi; // Simpan data mentah
+            globalSemuaPresensi = bData.semua_presensi;
             
-            renderPieDinamis(); // Kalkulasi Pie Chart berdasarkan bulan terpilih
+            renderPieDinamis();
             renderHeatmap(); 
             renderTabelKaryawan(bData.tabel_karyawan);
         }
@@ -413,43 +383,38 @@ async function fetchBehavioralData() {
     }
 }
 
-// Fungsi Baru: Navigasi Bulan
+// Fungsi: Navigasi Bulan
 function ubahBulan(arah) {
     currentMonth += arah;
     if (currentMonth < 0) {
-        currentMonth = 11; // Mundur ke Desember tahun lalu
+        currentMonth = 11;
         currentYear--;
     } else if (currentMonth > 11) {
-        currentMonth = 0; // Maju ke Januari tahun depan
+        currentMonth = 0;
         currentYear++;
     }
     
-    // Render ulang KEDUA grafik saat tombol diklik
     renderHeatmap(); 
     renderPieDinamis(); 
 }
 
-// Fungsi Baru: Filter Data Pie Chart Sesuai Bulan
+// Fungsi: Filter Data Pie Chart Sesuai Bulan
 function renderPieDinamis() {
-    // Siapkan wadah rekapitulasi awal (0)
     let rekap = { 'Sakit': 0, 'Alpha': 0, 'Izin': 0, 'Cuti': 0 };
 
-    // Buat format awalan string bulan (contoh: "2026-04" atau "2026-03")
     let monthStr = (currentMonth + 1).toString().padStart(2, '0');
     let prefixCari = `${currentYear}-${monthStr}`;
 
-    // Loop semua data dari database, saring HANYA yang bulannya cocok
     globalSemuaPresensi.forEach(item => {
         if (item.tanggal.startsWith(prefixCari)) {
             if (rekap[item.status_kehadiran] !== undefined) {
                 rekap[item.status_kehadiran]++;
             } else {
-                rekap[item.status_kehadiran] = 1; // Fallback jika ada status baru
+                rekap[item.status_kehadiran] = 1;
             }
         }
     });
 
-    // Kirim hasil saringan ke fungsi penggambar Chart.js
     renderPieRasio(rekap);
 }
 
@@ -500,9 +465,7 @@ function renderHeatmap() {
     globalTrenHarian.forEach(item => { mapTren[item.tanggal] = item.jumlah_absen; });
 
     // 3. Logika Penentuan Hari Kalender
-    // Mencari hari apa tanggal 1 di bulan tersebut (0 = Minggu, 1 = Senin, dst.)
     const hariPertama = new Date(currentYear, currentMonth, 1).getDay(); 
-    // Mencari total hari dalam bulan tersebut (28, 29, 30, atau 31)
     const jumlahHari = new Date(currentYear, currentMonth + 1, 0).getDate(); 
 
     let htmlGrid = '<div class="calendar-grid">';

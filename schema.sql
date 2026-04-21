@@ -1,9 +1,4 @@
--- schema.sql
--- Definisi Struktur Basis Data WellQuant (Skala 50 Karyawan)
-
--- ==========================================
--- 1. PEMBUATAN STRUKTUR TABEL (DDL)
--- ==========================================
+-- 1. STRUKTUR TABEL
 
 CREATE TABLE IF NOT EXISTS dim_karyawan (
     id_karyawan VARCHAR(20) PRIMARY KEY,
@@ -31,9 +26,7 @@ CREATE TABLE IF NOT EXISTS sys_parameter (
     tahun_fiskal INTEGER NOT NULL
 );
 
--- ==========================================
--- 2. INJEKSI 50 DATA KARYAWAN (DML)
--- ==========================================
+-- 2. VARIABEL DUMMY: 50 DATA KARYAWAN
 
 INSERT OR IGNORE INTO dim_karyawan (id_karyawan, nama_karyawan, departemen, posisi, gaji_harian, status_aktif, tanggal_resign) VALUES 
 -- Divisi Operasional (15 Orang)
@@ -96,9 +89,7 @@ INSERT OR IGNORE INTO dim_karyawan (id_karyawan, nama_karyawan, departemen, posi
 ('EMP-049', 'Uya Kuya', 'Statistik', 'Analis Data', 350000, 'Aktif', NULL),
 ('EMP-050', 'Vicky Prasetyo', 'Statistik', 'Surveyor', 280000, 'Aktif', NULL);
 
--- ==========================================
--- 3. INJEKSI DATA PRESENSI (DML) - 35 Rekaman
--- ==========================================
+-- 3. DATA PRESENSI: 35 Rekaman
 
 INSERT OR IGNORE INTO fact_presensi (id_karyawan, tanggal, status_kehadiran) VALUES 
 ('EMP-002', '2026-01-15', 'Sakit'), ('EMP-002', '2026-01-16', 'Sakit'),
@@ -124,9 +115,7 @@ INSERT OR IGNORE INTO fact_presensi (id_karyawan, tanggal, status_kehadiran) VAL
 ('EMP-019', '2026-04-20', 'Sakit'),
 ('EMP-033', '2026-04-21', 'Alpha');
 
--- ==========================================
 -- 4. PARAMETER SISTEM FINANSIAL
--- ==========================================
 -- Anggaran Investasi Program: Rp 150.000.000
 -- Estimasi Biaya Rekrutmen/Orang: Rp 12.500.000
 INSERT OR IGNORE INTO sys_parameter (id_parameter, anggaran_investasi, biaya_rekrutmen_per_orang, tahun_fiskal) VALUES 

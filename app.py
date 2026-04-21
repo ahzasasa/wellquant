@@ -8,7 +8,7 @@ from database import init_db, ambil_metrik_dasbor, ambil_data_behavioral
 app = Flask(__name__)
 CORS(app) 
 
-# Titik Akhir 1: Dasbor Eksekutif & Kalkulator
+# Dasbor & Kalkulator
 @app.route('/api/v1/metrik-sdm', methods=['GET'])
 def get_hr_metrics():
     try:
@@ -17,7 +17,7 @@ def get_hr_metrics():
     except Exception as e:
         return jsonify({"status": "error", "message": str(e)}), 500
 
-# Titik Akhir 2: Behavioral Tracker
+# Behavioral Tracker
 @app.route('/api/v1/analitik-presensi', methods=['GET'])
 def get_behavioral_data():
     try:

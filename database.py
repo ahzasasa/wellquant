@@ -1,4 +1,3 @@
-# database.py - Modul Manajemen Basis Data WellQuant
 import sqlite3
 import os
 
@@ -78,7 +77,7 @@ def ambil_data_behavioral():
     ''')
     tren_harian = [dict(row) for row in cursor.fetchall()]
     
-    # 3. Tabel Karyawan Kritis (Top 10 Absensi Tertinggi Keseluruhan)
+    # 3. Tabel Karyawan (Top 10 Absensi Tertinggi Keseluruhan)
     cursor.execute('''
         SELECT k.nama_karyawan, k.departemen, k.status_aktif, COUNT(p.id_presensi) as total_absen
         FROM dim_karyawan k
@@ -91,7 +90,7 @@ def ambil_data_behavioral():
     
     conn.close()
     return {
-        "semua_presensi": semua_presensi,  # <- Kunci ini yang kita ubah
+        "semua_presensi": semua_presensi,
         "tren_harian": tren_harian,
         "tabel_karyawan": tabel_karyawan
     }
