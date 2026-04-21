@@ -204,18 +204,59 @@ function renderEfisiensiProgram() {
     });
 }
 
-function renderTabelRisiko(turnover, absensi) {
-    const tbl = document.getElementById('tblRekomendasi');
-    if (!tbl) return;
-    
-    let htmlContent = "";
-    if (absensi > 3.5) {
-        htmlContent += `<tr><td style="font-weight: 500;">Operasional</td><td style="color: #e74c3c;">Risiko Absensi Tinggi</td><td>Prioritaskan Program RTW</td></tr>`;
+function renderTabelRisiko(dbData) {
+    const tableBody = document.getElementById('risk-table-body');
+    if (!tableBody) return;
+
+    let risikoData = [];
+
+    // 1. Logika untuk Operasional (Berdasarkan Absensi)
+    if (dbData.avg_absensi > 3.5) {
+        risikoData.push({
+            divisi: "Operasional",
+            potensi: "Kecelakaan Kerja",
+            rekomendasi: "Audit K3 & Program RTW"
+        });
     }
-    if (turnover > 10) {
-        htmlContent += `<tr><td style="font-weight: 500;">Teknologi</td><td style="color: #e74c3c;">Flight Risk Tinggi</td><td>Intervensi Konseling EAP</td></tr>`;
+
+    // 2. Logika untuk Teknologi (Berdasarkan Turnover)
+    if (dbData.avg_turnover > 10.0) {
+        risikoData.push({
+            divisi: "Teknologi",
+            potensi: "Flight Risk Tinggi",
+            rekomendasi: "Intervensi Konseling EAP"
+        });
     }
-    tbl.innerHTML = htmlContent;
+
+    // 3. Logika untuk Pemasaran (Berdasarkan KPI yang rendah)
+    // Asumsi: Kita cek apakah ada penurunan tajam pada skor rata-rata
+    if (dbData.roi_percentage < 0) {
+        risikoData.push({
+            divisi: "Pemasaran",
+            potensi: "Rejection Fatigue",
+            rekomendasi: "Resilience Training"
+        });
+    }
+
+    // 4. Logika untuk Keuangan & Statistik (Skenario Tambahan)
+    if (dbData.total_saving < 10000000) { 
+        risikoData.push({
+            divisi: "Keuangan",
+            potensi: "Human Error Risk",
+            rekomendasi: "Visual Health Program"
+        });
+    }
+
+    // Render ke HTML
+    tableBody.innerHTML = risikoData.length > 0 
+        ? risikoData.map(r => `
+            <tr>
+                <td style="font-weight:600;">${r.divisi}</td>
+                <td style="color: #e74c3c;">${r.potensi}</td>
+                <td style="font-size: 0.85rem;">${r.rekomendasi}</td>
+            </tr>
+        `).join('')
+        : '<tr><td colspan="3" style="text-align:center; color: #2ecc71;">Semua Divisi Berada di Zona Aman</td></tr>';
 }
 
 
@@ -359,24 +400,33 @@ window.onload = function() {
 
 // 9. LOGIKA EKSKLUSIF BEHAVIORAL TRACKER
 
-let currentMonth = 3;
+// 1. Pastikan semua variabel global wajib diakhiri array kosong [] 
+// agar tidak pernah dianggap 'undefined'
+let currentMonth = 3; 
 let currentYear = 2026;
 let globalTrenHarian = []; 
-let globalSemuaPresensi = [];
+let globalSemuaPresensi = []; 
+let globalSemuaKaryawan = [];
+let globalSemuaKinerja = [];
 
 async function fetchBehavioralData() {
     try {
         const response = await fetch('http://127.0.0.1:5000/api/v1/analitik-presensi');
         const result = await response.json();
 
-        if (result.status === 'success') {
-            const bData = result.data;
-            globalTrenHarian = bData.tren_harian; 
-            globalSemuaPresensi = bData.semua_presensi;
+        // 2. Trik Jitu: Menangkap data entah itu dibungkus 'result.data' atau langsung 'result'
+        const bData = result.data ? result.data : result;
+
+        if (bData) {
+            // 3. Gunakan fallback || [] (Jika data tidak ada, otomatis jadikan array kosong)
+            globalTrenHarian = bData.tren_harian || []; 
+            globalSemuaPresensi = bData.semua_presensi || []; 
+            globalSemuaKaryawan = bData.semua_karyawan || [];
+            globalSemuaKinerja = bData.semua_kinerja || [];
             
-            renderPieDinamis();
+            renderPieDinamis(); 
             renderHeatmap(); 
-            renderTabelKaryawan(bData.tabel_karyawan);
+            renderTabelDinamis();
         }
     } catch (error) {
         console.error("[!] Gagal menarik data Behavioral:", error);
@@ -386,16 +436,15 @@ async function fetchBehavioralData() {
 // Fungsi: Navigasi Bulan
 function ubahBulan(arah) {
     currentMonth += arah;
-    if (currentMonth < 0) {
-        currentMonth = 11;
-        currentYear--;
-    } else if (currentMonth > 11) {
-        currentMonth = 0;
-        currentYear++;
-    }
+    if (currentMonth < 0) { currentMonth = 11; currentYear--; } 
+    else if (currentMonth > 11) { currentMonth = 0; currentYear++; }
     
     renderHeatmap(); 
     renderPieDinamis(); 
+    
+    setTimeout(() => {
+        renderTabelDinamis(); 
+    }, 50); 
 }
 
 // Fungsi: Filter Data Pie Chart Sesuai Bulan
@@ -441,7 +490,9 @@ function renderPieRasio(rasioData) {
             }]
         },
         options: {
-            responsive: true, maintainAspectRatio: false,
+            animation: false,
+            responsive: true, 
+            maintainAspectRatio: false,
             plugins: {
                 legend: { position: 'right', labels: { font: { weight: 'normal', family: "'Poppins'" }, boxWidth: 12 } },
                 tooltip: { bodyFont: { weight: 'normal' } }
@@ -521,6 +572,81 @@ function renderTabelKaryawan(dataKaryawan) {
             <td>${k.departemen}</td>
             <td>${k.status_aktif}</td>
             <td style="text-align: center; font-weight: bold;">${k.total_absen} Hari</td>
+            <td>${keparahan}</td>
+        </tr>`;
+    });
+    
+    tbl.innerHTML = htmlContent;
+}
+
+// Fungsi Render Tabel Korelasi Dinamis
+function renderTabelDinamis() {
+    const tbl = document.getElementById('tblKaryawanRawan');
+    if (!tbl) return;
+
+    // Tentukan bulan apa yang sedang dilihat di layar (Format: YYYY-MM)
+    let monthStr = (currentMonth + 1).toString().padStart(2, '0');
+    let prefixCari = `${currentYear}-${monthStr}`;
+
+    // 1. Hitung akumulasi absen (Sakit/Alpha) tiap karyawan di bulan tersebut
+    let absenMap = {};
+    globalSemuaPresensi.forEach(p => {
+        if (p.tanggal.startsWith(prefixCari) && (p.status_kehadiran === 'Sakit' || p.status_kehadiran === 'Alpha')) {
+            absenMap[p.id_karyawan] = (absenMap[p.id_karyawan] || 0) + 1;
+        }
+    });
+
+    // 2. Ambil Skor KPI tiap karyawan di bulan tersebut (Hasil hitungan otomatis SQL)
+    let kpiMap = {};
+    globalSemuaKinerja.forEach(k => {
+        if (k.periode_bulan === prefixCari) {
+            kpiMap[k.id_karyawan] = k.skor_kpi;
+        }
+    });
+
+    // 3. Gabungkan Data
+    let dataTabel = [];
+    globalSemuaKaryawan.forEach(emp => {
+        let totalAbsen = absenMap[emp.id_karyawan] || 0;
+        let skorKpi = kpiMap[emp.id_karyawan];
+
+        // Tampilkan ke tabel HANYA jika karyawan absen ATAU punya rekaman KPI bulan itu
+        if (totalAbsen > 0 || skorKpi !== undefined) {
+            dataTabel.push({
+                nama: emp.nama_karyawan, 
+                dept: emp.departemen, 
+                absen: totalAbsen, 
+                kpi: skorKpi !== undefined ? skorKpi : '-' // Tampilkan '-' jika data KPI kosong
+            });
+        }
+    });
+
+    // Urutkan tabel: Skor KPI Bulanan dari Tertinggi ke Terendah
+    dataTabel.sort((a, b) => {
+        let skorA = (a.kpi === '-') ? 0 : parseFloat(a.kpi);
+        let skorB = (b.kpi === '-') ? 0 : parseFloat(b.kpi);
+        
+        return skorB - skorA; 
+    });
+
+    // 4. Render HTML dengan Analitik Preskriptif (Warna Hijau/Merah)
+    let htmlContent = "";
+    dataTabel.forEach(k => {
+        let keparahan = k.absen >= 3 
+            ? '<span class="badge-kritis">Perlu Intervensi (SP/EAP)</span>' 
+            : '<span class="badge-aman">Batas Wajar</span>';
+            
+        // Aturan Kinerja: Merah jika di bawah 75, Hijau jika 75 ke atas
+        let warnaKpi = (k.kpi !== '-' && k.kpi < 75) 
+            ? 'color: #e74c3c; font-weight: bold;' 
+            : 'color: #2ecc71; font-weight: bold;';
+
+        htmlContent += `
+        <tr>
+            <td style="font-weight: 600; color: #01120A;">${k.nama}</td>
+            <td>${k.dept}</td>
+            <td style="text-align: center; font-weight: bold;">${k.absen} Hari</td>
+            <td style="text-align: center; ${warnaKpi}">${k.kpi}</td>
             <td>${keparahan}</td>
         </tr>`;
     });

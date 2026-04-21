@@ -60,15 +60,15 @@ def ambil_metrik_dasbor():
     }
 
 def ambil_data_behavioral():
-    """Mengekstraksi data analitik perilaku (Heatmap, Pie, & Tabel Individu)"""
+    """Mengekstraksi data analitik perilaku (Heatmap, Pie, & Tabel Korelasi KPI)"""
     conn = get_db_connection()
     cursor = conn.cursor()
     
-    # 1. Data Presensi Mentah (Dikirim utuh agar bisa di-filter per bulan oleh JavaScript)
-    cursor.execute("SELECT tanggal, status_kehadiran FROM fact_presensi")
+    # 1. Data Presensi Mentah (Untuk Heatmap dan Filter Bulanan JS)
+    cursor.execute("SELECT id_karyawan, tanggal, status_kehadiran FROM fact_presensi")
     semua_presensi = [dict(row) for row in cursor.fetchall()]
     
-    # 2. Distribusi Heatmap (Tanggal vs Jumlah Absen)
+    # 2. Distribusi Tren Harian (Berapa banyak yang absen per hari)
     cursor.execute('''
         SELECT tanggal, COUNT(*) as jumlah_absen 
         FROM fact_presensi 
@@ -77,20 +77,28 @@ def ambil_data_behavioral():
     ''')
     tren_harian = [dict(row) for row in cursor.fetchall()]
     
-    # 3. Tabel Karyawan (Top 10 Absensi Tertinggi Keseluruhan)
+    # 3. Data Master Karyawan
+    cursor.execute("SELECT id_karyawan, nama_karyawan, departemen FROM dim_karyawan")
+    semua_karyawan = [dict(row) for row in cursor.fetchall()]
+    
+    # 4. KALKULASI SKOR KPI OTOMATIS (SQL JOIN & AGREGASI)
+    # Menghitung: SUM((Aktual / Target) * Bobot)
     cursor.execute('''
-        SELECT k.nama_karyawan, k.departemen, k.status_aktif, COUNT(p.id_presensi) as total_absen
-        FROM dim_karyawan k
-        JOIN fact_presensi p ON k.id_karyawan = p.id_karyawan
-        WHERE p.status_kehadiran IN ('Sakit', 'Alpha')
-        GROUP BY k.id_karyawan
-        ORDER BY total_absen DESC LIMIT 10
+        SELECT 
+            f.id_karyawan, 
+            f.periode_bulan, 
+            ROUND(SUM((f.pencapaian_aktual * 1.0 / k.target_bulanan) * k.bobot_persen), 1) as skor_kpi
+        FROM fact_kinerja f
+        JOIN dim_kpi k ON f.id_kpi = k.id_kpi
+        GROUP BY f.id_karyawan, f.periode_bulan
     ''')
-    tabel_karyawan = [dict(row) for row in cursor.fetchall()]
+    semua_kinerja = [dict(row) for row in cursor.fetchall()]
     
     conn.close()
+    
     return {
         "semua_presensi": semua_presensi,
         "tren_harian": tren_harian,
-        "tabel_karyawan": tabel_karyawan
+        "semua_karyawan": semua_karyawan,
+        "semua_kinerja": semua_kinerja
     }

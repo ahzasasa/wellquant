@@ -1,5 +1,6 @@
 -- 1. STRUKTUR TABEL
 
+-- Tabel dimensi karyawan
 CREATE TABLE IF NOT EXISTS dim_karyawan (
     id_karyawan VARCHAR(20) PRIMARY KEY,
     nama_karyawan VARCHAR(100) NOT NULL,
@@ -15,7 +16,7 @@ CREATE TABLE IF NOT EXISTS fact_presensi (
     id_karyawan VARCHAR(20),
     tanggal DATE NOT NULL,
     status_kehadiran VARCHAR(20) NOT NULL,
-    UNIQUE(id_karyawan, tanggal), -- <--- TAMBAHKAN BARIS INI
+    UNIQUE(id_karyawan, tanggal),
     FOREIGN KEY (id_karyawan) REFERENCES dim_karyawan(id_karyawan) ON DELETE CASCADE
 );
 
@@ -25,6 +26,57 @@ CREATE TABLE IF NOT EXISTS sys_parameter (
     biaya_rekrutmen_per_orang REAL NOT NULL,
     tahun_fiskal INTEGER NOT NULL
 );
+
+-- 4. Tabel dimensi KPI: Data Indikator per Divisi
+CREATE TABLE IF NOT EXISTS dim_kpi (
+    id_kpi VARCHAR(10) PRIMARY KEY,
+    departemen VARCHAR(50) NOT NULL,
+    nama_kpi VARCHAR(100) NOT NULL,
+    target_bulanan NUMERIC NOT NULL,
+    bobot_persen NUMERIC NOT NULL -- Contoh: 60 untuk 60%
+);
+
+-- 5. Tabel fakta kerja: pencapaian aktual karyawan
+CREATE TABLE IF NOT EXISTS fact_kinerja (
+    id_kinerja INTEGER PRIMARY KEY AUTOINCREMENT,
+    id_karyawan VARCHAR(20) NOT NULL,
+    id_kpi VARCHAR(10) NOT NULL,
+    periode_bulan VARCHAR(7) NOT NULL, -- Format: YYYY-MM
+    pencapaian_aktual NUMERIC NOT NULL,
+    UNIQUE(id_karyawan, id_kpi, periode_bulan),
+    FOREIGN KEY (id_karyawan) REFERENCES dim_karyawan(id_karyawan) ON DELETE CASCADE,
+    FOREIGN KEY (id_kpi) REFERENCES dim_kpi(id_kpi) ON DELETE CASCADE
+);
+
+
+
+-- KPI
+
+INSERT OR IGNORE INTO dim_kpi (id_kpi, departemen, nama_kpi, target_bulanan, bobot_persen) VALUES 
+-- 1. DIVISI OPERASIONAL
+('KPI-OP1', 'Operasional', 'Pencapaian Target Produksi (Unit)', 1000, 50),
+('KPI-OP2', 'Operasional', 'Produk Lolos Uji Mutu / Tanpa Cacat (Unit)', 1000, 30),
+('KPI-OP3', 'Operasional', 'Kepatuhan Protokol K3 (%)', 100, 20),
+
+-- 2. DIVISI TEKNOLOGI
+('KPI-TK1', 'Teknologi', 'Sprint Task Selesai Tepat Waktu (Task)', 50, 45),
+('KPI-TK2', 'Teknologi', 'Resolusi Bug Sesuai SLA (%)', 100, 35),
+('KPI-TK3', 'Teknologi', 'Uptime Keandalan Server (%)', 100, 20),
+
+-- 3. DIVISI PEMASARAN
+('KPI-MK1', 'Pemasaran', 'Sales Quota / Pendapatan (Juta Rupiah)', 500, 50),
+('KPI-MK2', 'Pemasaran', 'Akuisisi Klien Baru (Perusahaan)', 20, 30),
+('KPI-MK3', 'Pemasaran', 'Skor Kepuasan Klien / NPS (Skala 1-10)', 10, 20),
+
+-- 4. DIVISI KEUANGAN
+('KPI-KU1', 'Keuangan', 'Akurasi Laporan Keuangan Bebas Temuan (%)', 100, 45),
+('KPI-KU2', 'Keuangan', 'Ketepatan Waktu Tutup Buku Bulanan (%)', 100, 35),
+('KPI-KU3', 'Keuangan', 'Efisiensi Penagihan Piutang (Juta Rupiah)', 200, 20),
+
+-- 5. DIVISI STATISTIK (Data & Analytics)
+('KPI-ST1', 'Statistik', 'Akurasi Model Prediksi Analitik (%)', 100, 45),
+('KPI-ST2', 'Statistik', 'Ketepatan Waktu Rilis Dashboard (%)', 100, 35),
+('KPI-ST3', 'Statistik', 'Rekomendasi Strategis yang Diterima (Ide)', 5, 20);
 
 -- 2. VARIABEL DUMMY: 50 DATA KARYAWAN
 
@@ -114,6 +166,87 @@ INSERT OR IGNORE INTO fact_presensi (id_karyawan, tanggal, status_kehadiran) VAL
 ('EMP-005', '2026-04-20', 'Sakit'), ('EMP-005', '2026-04-21', 'Sakit'),
 ('EMP-019', '2026-04-20', 'Sakit'),
 ('EMP-033', '2026-04-21', 'Alpha');
+
+
+
+-- KPI
+
+-- ============================================================================
+-- PENGISIAN PENCAPAIAN AKTUAL KARYAWAN (SELURUH 10 KARYAWAN)
+-- Menyimulasikan kinerja bulan Maret 2026 vs April 2026
+-- ============================================================================
+
+INSERT OR IGNORE INTO fact_kinerja (id_karyawan, id_kpi, periode_bulan, pencapaian_aktual) VALUES 
+
+-- ==========================================
+-- 1. DIVISI OPERASIONAL
+-- ==========================================
+-- EMP-001 (Ahmad Dani) - Aktif (April anjlok karena sakit)
+('EMP-001', 'KPI-OP1', '2026-03', 980), 
+('EMP-001', 'KPI-OP2', '2026-03', 950), 
+('EMP-001', 'KPI-OP3', '2026-03', 100),
+('EMP-001', 'KPI-OP1', '2026-04', 600), 
+('EMP-001', 'KPI-OP2', '2026-04', 500), 
+('EMP-001', 'KPI-OP3', '2026-04', 60),
+
+-- EMP-006 (Rina Nose) - Resign (Kinerja memburuk sebelum akhirnya resign)
+('EMP-006', 'KPI-OP1', '2026-03', 700), ('EMP-006', 'KPI-OP2', '2026-03', 650), ('EMP-006', 'KPI-OP3', '2026-03', 80),
+('EMP-006', 'KPI-OP1', '2026-04', 300), ('EMP-006', 'KPI-OP2', '2026-04', 200), ('EMP-006', 'KPI-OP3', '2026-04', 50),
+
+-- ==========================================
+-- 2. DIVISI TEKNOLOGI
+-- ==========================================
+-- EMP-003 (Dedi Pratama) - Aktif (Kinerja stabil tinggi)
+('EMP-003', 'KPI-TK1', '2026-03', 48), ('EMP-003', 'KPI-TK2', '2026-03', 95), ('EMP-003', 'KPI-TK3', '2026-03', 100),
+('EMP-003', 'KPI-TK1', '2026-04', 46), ('EMP-003', 'KPI-TK2', '2026-04', 92), ('EMP-003', 'KPI-TK3', '2026-04', 100),
+
+-- EMP-007 (Gilang Dirga) - Resign (Kinerja mulai turun karena burnout)
+('EMP-007', 'KPI-TK1', '2026-03', 40),
+('EMP-007', 'KPI-TK2', '2026-03', 80),
+('EMP-007', 'KPI-TK3', '2026-03', 98),
+('EMP-007', 'KPI-TK1', '2026-04', 20),
+('EMP-007', 'KPI-TK2', '2026-04', 60),
+('EMP-007', 'KPI-TK3', '2026-04', 95),
+
+-- EMP-009 (Reza Rahadian) - Aktif (Karyawan bintang/Performa maksimal)
+('EMP-009', 'KPI-TK1', '2026-03', 50), 
+('EMP-009', 'KPI-TK2', '2026-03', 100),
+('EMP-009', 'KPI-TK3', '2026-03', 100),
+('EMP-009', 'KPI-TK1', '2026-04', 50), 
+('EMP-009', 'KPI-TK2', '2026-04', 98), 
+('EMP-009', 'KPI-TK3', '2026-04', 100),
+
+-- ==========================================
+-- 3. DIVISI PEMASARAN
+-- ==========================================
+-- EMP-002 (Farah Quinn) - Aktif (April anjlok karena stres/sakit)
+('EMP-002', 'KPI-MK1', '2026-03', 500), ('EMP-002', 'KPI-MK2', '2026-03', 20), ('EMP-002', 'KPI-MK3', '2026-03', 9),
+('EMP-002', 'KPI-MK1', '2026-04', 250), ('EMP-002', 'KPI-MK2', '2026-04', 8),  ('EMP-002', 'KPI-MK3', '2026-04', 6),
+
+-- EMP-008 (Ayu Ting Ting) - Aktif (Konsisten mencapai target)
+('EMP-008', 'KPI-MK1', '2026-03', 480), ('EMP-008', 'KPI-MK2', '2026-03', 18), ('EMP-008', 'KPI-MK3', '2026-03', 8.5),
+('EMP-008', 'KPI-MK1', '2026-04', 490), ('EMP-008', 'KPI-MK2', '2026-04', 19), ('EMP-008', 'KPI-MK3', '2026-04', 9.0),
+
+-- ==========================================
+-- 4. DIVISI KEUANGAN
+-- ==========================================
+-- EMP-004 (Siti Nurhaliza) - Aktif (Akurasi sangat tinggi)
+('EMP-004', 'KPI-KU1', '2026-03', 100), ('EMP-004', 'KPI-KU2', '2026-03', 100), ('EMP-004', 'KPI-KU3', '2026-03', 195),
+('EMP-004', 'KPI-KU1', '2026-04', 98),  ('EMP-004', 'KPI-KU2', '2026-04', 100), ('EMP-004', 'KPI-KU3', '2026-04', 190),
+
+-- EMP-010 (Tara Basro) - Resign (Banyak error sebelum resign)
+('EMP-010', 'KPI-KU1', '2026-03', 80),  ('EMP-010', 'KPI-KU2', '2026-03', 90),  ('EMP-010', 'KPI-KU3', '2026-03', 150),
+('EMP-010', 'KPI-KU1', '2026-04', 60),  ('EMP-010', 'KPI-KU2', '2026-04', 50),  ('EMP-010', 'KPI-KU3', '2026-04', 100),
+
+-- ==========================================
+-- 5. DIVISI STATISTIK
+-- ==========================================
+-- EMP-005 (Budi Santoso) - Aktif (Stabil)
+('EMP-005', 'KPI-ST1', '2026-03', 95),  ('EMP-005', 'KPI-ST2', '2026-03', 100), ('EMP-005', 'KPI-ST3', '2026-03', 5),
+('EMP-005', 'KPI-ST1', '2026-04', 92),  ('EMP-005', 'KPI-ST2', '2026-04', 95),  ('EMP-005', 'KPI-ST3', '2026-04', 4);
+
+
+
 
 -- 4. PARAMETER SISTEM FINANSIAL
 -- Anggaran Investasi Program: Rp 150.000.000
