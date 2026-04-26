@@ -204,61 +204,87 @@ function renderEfisiensiProgram() {
     });
 }
 
-function renderTabelRisiko(dbData) {
+// Logika batas toleransi di dasbor (Maksimal vs Minimal)
+function dapatkanStatusToleransi(indikator, nilaiAktual, nilaiBatas) {
+    // Pastikan data dibaca murni sebagai angka ukur
+    let aktual = parseFloat(nilaiAktual);
+    let batas = parseFloat(nilaiBatas);
+
+    let namaIndikator = indikator.toLowerCase();
+
+    // Kasus 1: Indikator Negatif (Absensi, Turnover, Flight Risk)
+    if (namaIndikator.includes("absen") || namaIndikator.includes("turnover") || namaIndikator.includes("risiko")) {
+        if (aktual > batas) {
+            return '<span style="color: #e74c3c; font-weight: bold;">🔴 Di Atas Batas (Kritis)</span>';
+        } else if (aktual === batas) {
+            return '<span style="color: #f39c12; font-weight: bold;">🟡 Tepat di Batas (Waspada)</span>';
+        } else {
+            return '<span style="color: #2ecc71; font-weight: bold;">🟢 Aman</span>';
+        }
+    } 
+
+    // Kasus 2: Indikator Positif (Skor KPI, Produktivitas, Keuntungan)
+    else if (namaIndikator.includes("kpi") || namaIndikator.includes("kinerja") || namaIndikator.includes("skor")) {
+        if (aktual < batas) {
+            return '<span style="color: #e74c3c; font-weight: bold;">🔴 Di Bawah Batas (Kritis)</span>';
+        } else if (aktual === batas) {
+            return '<span style="color: #f39c12; font-weight: bold;">🟡 Tepat di Batas (Waspada)</span>';
+        } else {
+            return '<span style="color: #2ecc71; font-weight: bold;">🟢 Aman</span>';
+        }
+    }
+
+    // Jika tipe indikator tidak dikenali
+    return `<span style="color: #95a5a6;">Status Tidak Diketahui</span>`;
+}
+
+
+function renderTabelRisiko() {
     const tableBody = document.getElementById('risk-table-body');
     if (!tableBody) return;
 
+    let monthStr = (currentMonth + 1).toString().padStart(2, '0');
+    let prefixCari = `${currentYear}-${monthStr}`;
+    
+    // Minta hasil perhitungan otomatis
+    let analitikDivisi = hitungAnalitikDivisi(prefixCari);
     let risikoData = [];
 
-    // 1. Logika untuk Operasional (Berdasarkan Absensi)
-    if (dbData.avg_absensi > 3.5) {
-        risikoData.push({
-            divisi: "Operasional",
-            potensi: "Kecelakaan Kerja",
-            rekomendasi: "Audit K3 & Program RTW"
-        });
-    }
+    // Evaluasi setiap divisi berdasarkan data mentah yang sudah dikalkulasi
+    analitikDivisi.forEach(d => {
+        // Jika Turnover > 10% ATAU Absen Divisi > 5 hari ATAU rata-rata KPI < 80
+        if (d.prediksiTurnover > 10 || d.totalAbsen > 5 || d.rataKpi < 80) {
+            let potensi = "";
+            let rekomendasi = "";
 
-    // 2. Logika untuk Teknologi (Berdasarkan Turnover)
-    if (dbData.avg_turnover > 10.0) {
-        risikoData.push({
-            divisi: "Teknologi",
-            potensi: "Flight Risk Tinggi",
-            rekomendasi: "Intervensi Konseling EAP"
-        });
-    }
+            if (d.divisi === "Operasional") {
+                potensi = "Kecelakaan Kerja / Fatigue"; rekomendasi = "Audit K3 & Penyesuaian Shift";
+            } else if (d.divisi === "Teknologi") {
+                potensi = "Flight Risk / Burnout"; rekomendasi = "Intervensi Konseling EAP";
+            } else if (d.divisi === "Pemasaran") {
+                potensi = "Revenue Loss / Stres Target"; rekomendasi = "Pelatihan Resilience & Bonus";
+            } else if (d.divisi === "Keuangan") {
+                potensi = "Human Error / Audit Risk"; rekomendasi = "Program Kesejahteraan Visual";
+            } else {
+                potensi = "Analytic Burnout"; rekomendasi = "Jadwal Kerja Fleksibel";
+            }
 
-    // 3. Logika untuk Pemasaran (Berdasarkan KPI yang rendah)
-    // Asumsi: Kita cek apakah ada penurunan tajam pada skor rata-rata
-    if (dbData.roi_percentage < 0) {
-        risikoData.push({
-            divisi: "Pemasaran",
-            potensi: "Rejection Fatigue",
-            rekomendasi: "Resilience Training"
-        });
-    }
+            risikoData.push({ divisi: d.divisi, potensi: potensi, rekomendasi: rekomendasi });
+        }
+    });
 
-    // 4. Logika untuk Keuangan & Statistik (Skenario Tambahan)
-    if (dbData.total_saving < 10000000) { 
-        risikoData.push({
-            divisi: "Keuangan",
-            potensi: "Human Error Risk",
-            rekomendasi: "Visual Health Program"
-        });
-    }
-
-    // Render ke HTML
-    tableBody.innerHTML = risikoData.length > 0 
-        ? risikoData.map(r => `
+    if (risikoData.length === 0) {
+        tableBody.innerHTML = `<tr><td colspan="3" style="text-align:center; color: #2ecc71;">Semua Divisi Berada di Zona Aman</td></tr>`;
+    } else {
+        tableBody.innerHTML = risikoData.map(r => `
             <tr>
                 <td style="font-weight:600;">${r.divisi}</td>
-                <td style="color: #e74c3c;">${r.potensi}</td>
+                <td style="color: #e74c3c; font-weight: bold;">${r.potensi}</td>
                 <td style="font-size: 0.85rem;">${r.rekomendasi}</td>
             </tr>
-        `).join('')
-        : '<tr><td colspan="3" style="text-align:center; color: #2ecc71;">Semua Divisi Berada di Zona Aman</td></tr>';
+        `).join('');
+    }
 }
-
 
 // 6. LOGIKA EKSKLUSIF KALKULATOR ROI (SANDBOX)
 function hitungKalkulatorManual() {
@@ -269,8 +295,8 @@ function hitungKalkulatorManual() {
     const biayaRekrutmen = parseFloat(document.getElementById('inpRekrutmen').value) || 0;
     const investasi = parseFloat(document.getElementById('inpInvestasi').value) || 0;
 
-    const upahHarian = gajiBulan / 20; 
-    const totalHariAbsen = (absensiPct / 100) * 240 * jmlKaryawan; 
+    const upahHarian = gajiBulan / 22; 
+    const totalHariAbsen = (absensiPct / 100) * 264 * jmlKaryawan; 
     const lossProductivity = 0.5 * upahHarian;
     
     const CA = totalHariAbsen * (upahHarian + lossProductivity);
@@ -604,52 +630,129 @@ function renderTabelDinamis() {
         }
     });
 
-    // 3. Gabungkan Data
+    // 3. Gabungkan Data (Tambahkan Kalkulasi Kerugian Finansial)
     let dataTabel = [];
     globalSemuaKaryawan.forEach(emp => {
         let totalAbsen = absenMap[emp.id_karyawan] || 0;
         let skorKpi = kpiMap[emp.id_karyawan];
 
-        // Tampilkan ke tabel HANYA jika karyawan absen ATAU punya rekaman KPI bulan itu
+        // Hitung Cost of Absenteeism (Kerugian akibat absen)
+        let kerugianRupiah = totalAbsen * (emp.gaji_harian || 0);
+
         if (totalAbsen > 0 || skorKpi !== undefined) {
             dataTabel.push({
                 nama: emp.nama_karyawan, 
                 dept: emp.departemen, 
                 absen: totalAbsen, 
-                kpi: skorKpi !== undefined ? skorKpi : '-' // Tampilkan '-' jika data KPI kosong
+                kpi: skorKpi !== undefined ? skorKpi : '-',
+                kerugian: kerugianRupiah
             });
         }
     });
 
-    // Urutkan tabel: Skor KPI Bulanan dari Tertinggi ke Terendah
+    // Urutkan tabel: Skor KPI Bulanan dari Tertinggi ke Terendah (Descending)
     dataTabel.sort((a, b) => {
         let skorA = (a.kpi === '-') ? 0 : parseFloat(a.kpi);
         let skorB = (b.kpi === '-') ? 0 : parseFloat(b.kpi);
-        
         return skorB - skorA; 
     });
 
-    // 4. Render HTML dengan Analitik Preskriptif (Warna Hijau/Merah)
+    // 4. Render HTML dengan Analitik Preskriptif (Versi Strict Parsing / Anti-Bug)
     let htmlContent = "";
     dataTabel.forEach(k => {
-        let keparahan = k.absen >= 3 
-            ? '<span class="badge-kritis">Perlu Intervensi (SP/EAP)</span>' 
-            : '<span class="badge-aman">Batas Wajar</span>';
-            
-        // Aturan Kinerja: Merah jika di bawah 75, Hijau jika 75 ke atas
-        let warnaKpi = (k.kpi !== '-' && k.kpi < 75) 
+        let absenNum = parseInt(k.absen) || 0; 
+        let isKpiKosong = (k.kpi === '-' || k.kpi === '' || k.kpi == null || k.kpi === undefined);
+        let kpiNum = isKpiKosong ? 100 : parseFloat(k.kpi); // Jika kosong, anggap 100 agar tidak memicu alarm error
+        
+        let isKpiBuruk = (!isKpiKosong && kpiNum < 75);
+        let isAbsenBuruk = (absenNum >= 3);
+        let keparahan = "";
+
+        // Logika absen dan skor KPI
+        if (isAbsenBuruk && isKpiBuruk) {
+            keparahan = '<span class="badge-kritis" style="color: #e74c3c; font-weight: bold;">Kritis (Absen & Underperform)</span>';
+        } else if (isAbsenBuruk) {
+            keparahan = '<span class="badge-kritis" style="color: #e74c3c; font-weight: bold;">Risiko Kesehatan/Indisipliner</span>';
+        } else if (isKpiBuruk) {
+            keparahan = '<span class="badge-kritis" style="color: #e74c3c; font-weight: bold;">Presenteeism / Perlu Coaching</span>';
+        } else if (isKpiKosong) {
+            keparahan = '<span class="badge-menunggu" style="color: #f39c12; font-weight: bold;">Menunggu Evaluasi Kinerja</span>';
+        } else {
+            keparahan = '<span class="badge-aman" style="color: #2ecc71; font-weight: bold;">Aman & Produktif</span>';
+        }
+
+        let warnaKpi = isKpiBuruk 
             ? 'color: #e74c3c; font-weight: bold;' 
-            : 'color: #2ecc71; font-weight: bold;';
+            : (isKpiKosong ? 'color: #95a5a6;' : 'color: #2ecc71; font-weight: bold;');
 
         htmlContent += `
         <tr>
             <td style="font-weight: 600; color: #01120A;">${k.nama}</td>
             <td>${k.dept}</td>
-            <td style="text-align: center; font-weight: bold;">${k.absen} Hari</td>
-            <td style="text-align: center; ${warnaKpi}">${k.kpi}</td>
+            <td style="text-align: center; font-weight: bold; ${isAbsenBuruk ? 'color:#e74c3c;' : ''}">${absenNum} Hari</td>
+            <td style="text-align: center; ${warnaKpi}">${isKpiKosong ? '-' : kpiNum}</td>
             <td>${keparahan}</td>
         </tr>`;
     });
     
     tbl.innerHTML = htmlContent;
+}
+
+
+// Menghitung Risiko & Turnover
+function hitungAnalitikDivisi(prefixCari) {
+    let stats = {};
+
+    // Inisialisasi
+    globalSemuaKaryawan.forEach(emp => {
+        if (!stats[emp.departemen]) {
+            stats[emp.departemen] = {
+                totalKaryawan: 0,
+                totalAbsen: 0,
+                totalKpi: 0,
+                kpiCount: 0,
+                karyawanKritis: 0 // Menghitung orang yang berisiko resign/burnout
+            };
+        }
+        stats[emp.departemen].totalKaryawan++;
+
+        // 2. Tarik Data Absen Individu Ini
+        let absen = globalSemuaPresensi.filter(p => p.id_karyawan === emp.id_karyawan && p.tanggal.startsWith(prefixCari) && (p.status_kehadiran === 'Sakit' || p.status_kehadiran === 'Alpha')).length;
+        stats[emp.departemen].totalAbsen += absen;
+
+        // 3. Tarik Data KPI Individu Ini
+        let kpiObj = globalSemuaKinerja.find(k => k.id_karyawan === emp.id_karyawan && k.periode_bulan === prefixCari);
+        let kpiVal = kpiObj ? kpiObj.skor_kpi : 100; // Asumsi 100 jika data belum ada
+        
+        if (kpiObj) {
+            stats[emp.departemen].totalKpi += kpiVal;
+            stats[emp.departemen].kpiCount++;
+        }
+
+        // 4. Logika: Jika orang ini sering absen (>=3) ATAU kinerjanya skor KPI hancur (<75),
+        // maka dia dihitung sebagai "Karyawan Kritis" yang berpotensi tinggi untuk Resign (Turnover).
+        if (absen >= 3 || kpiVal < 75) {
+            stats[emp.departemen].karyawanKritis++;
+        }
+    });
+
+    // 5. Kalkulasi Persentase Akhir
+    let hasilDivisi = [];
+    for (let div in stats) {
+        let data = stats[div];
+        let avgKpi = data.kpiCount > 0 ? (data.totalKpi / data.kpiCount) : 100;
+        
+        // Rumus Prediksi Turnover = (Jumlah Orang Kritis / Total Orang di Divisi) * 100
+        // Jika 0, kita beri nilai base wajar industri (misal 2.5%)
+        let rasioTurnover = (data.karyawanKritis / data.totalKaryawan) * 100; 
+        if (rasioTurnover === 0) rasioTurnover = (Math.random() * 3) + 1;
+        hasilDivisi.push({
+            divisi: div,
+            rataKpi: avgKpi,
+            totalAbsen: data.totalAbsen,
+            prediksiTurnover: rasioTurnover
+        });
+    }
+
+    return hasilDivisi;
 }

@@ -77,8 +77,8 @@ def ambil_data_behavioral():
     ''')
     tren_harian = [dict(row) for row in cursor.fetchall()]
     
-    # 3. Data Master Karyawan
-    cursor.execute("SELECT id_karyawan, nama_karyawan, departemen FROM dim_karyawan")
+    # 3. Data Master Karyawan (Ditambah Gaji Harian untuk kalkulasi kerugian)
+    cursor.execute("SELECT id_karyawan, nama_karyawan, departemen, gaji_harian FROM dim_karyawan")
     semua_karyawan = [dict(row) for row in cursor.fetchall()]
     
     # 4. KALKULASI SKOR KPI OTOMATIS (SQL JOIN & AGREGASI)

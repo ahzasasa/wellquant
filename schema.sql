@@ -11,6 +11,7 @@ CREATE TABLE IF NOT EXISTS dim_karyawan (
     tanggal_resign DATE NULL
 );
 
+-- tabel fakta presensi
 CREATE TABLE IF NOT EXISTS fact_presensi (
     id_presensi INTEGER PRIMARY KEY AUTOINCREMENT,
     id_karyawan VARCHAR(20),
@@ -20,6 +21,7 @@ CREATE TABLE IF NOT EXISTS fact_presensi (
     FOREIGN KEY (id_karyawan) REFERENCES dim_karyawan(id_karyawan) ON DELETE CASCADE
 );
 
+-- Tabel parameter perusahaan
 CREATE TABLE IF NOT EXISTS sys_parameter (
     id_parameter INTEGER PRIMARY KEY DEFAULT 1,
     anggaran_investasi REAL NOT NULL,
@@ -33,7 +35,7 @@ CREATE TABLE IF NOT EXISTS dim_kpi (
     departemen VARCHAR(50) NOT NULL,
     nama_kpi VARCHAR(100) NOT NULL,
     target_bulanan NUMERIC NOT NULL,
-    bobot_persen NUMERIC NOT NULL -- Contoh: 60 untuk 60%
+    bobot_persen NUMERIC NOT NULL
 );
 
 -- 5. Tabel fakta kerja: pencapaian aktual karyawan
@@ -171,10 +173,8 @@ INSERT OR IGNORE INTO fact_presensi (id_karyawan, tanggal, status_kehadiran) VAL
 
 -- KPI
 
--- ============================================================================
 -- PENGISIAN PENCAPAIAN AKTUAL KARYAWAN (SELURUH 10 KARYAWAN)
 -- Menyimulasikan kinerja bulan Maret 2026 vs April 2026
--- ============================================================================
 
 INSERT OR IGNORE INTO fact_kinerja (id_karyawan, id_kpi, periode_bulan, pencapaian_aktual) VALUES 
 
@@ -253,3 +253,43 @@ INSERT OR IGNORE INTO fact_kinerja (id_karyawan, id_kpi, periode_bulan, pencapai
 -- Estimasi Biaya Rekrutmen/Orang: Rp 12.500.000
 INSERT OR IGNORE INTO sys_parameter (id_parameter, anggaran_investasi, biaya_rekrutmen_per_orang, tahun_fiskal) VALUES 
 (1, 150000000, 12500000, 2026);
+
+
+
+
+-- ============================================================================
+-- PENGUJIAN FITUR AREA RISIKO TINGGI (BULAN MEI 2026)
+-- Semua divisi dipaksa melanggar batas toleransi (Absen > 5 atau KPI < 75)
+-- ============================================================================
+
+-- 1. SUNTIKAN DATA ABSENSI BURUK BULAN MEI 2026 (Sakit & Alpha)
+INSERT OR IGNORE INTO fact_presensi (id_karyawan, tanggal, status_kehadiran) VALUES 
+-- Operasional: Total 6 Hari Absen (Akan memicu alarm Kecelakaan Kerja)
+('EMP-001', '2026-05-04', 'Sakit'), ('EMP-001', '2026-05-05', 'Sakit'), ('EMP-001', '2026-05-06', 'Sakit'),
+('EMP-006', '2026-05-11', 'Sakit'), ('EMP-006', '2026-05-12', 'Sakit'), ('EMP-006', '2026-05-13', 'Sakit'),
+
+-- Pemasaran: Total 6 Hari Absen (Akan memicu alarm Revenue Loss)
+('EMP-002', '2026-05-07', 'Alpha'), ('EMP-002', '2026-05-08', 'Alpha'), ('EMP-002', '2026-05-09', 'Alpha'),
+('EMP-008', '2026-05-14', 'Sakit'), ('EMP-008', '2026-05-15', 'Sakit'), ('EMP-008', '2026-05-16', 'Sakit'),
+
+-- Statistik: Total 6 Hari Absen (Akan memicu alarm Analytic Burnout)
+('EMP-005', '2026-05-18', 'Sakit'), ('EMP-005', '2026-05-19', 'Sakit'), ('EMP-005', '2026-05-20', 'Sakit'),
+('EMP-005', '2026-05-21', 'Sakit'), ('EMP-005', '2026-05-22', 'Sakit'), ('EMP-005', '2026-05-23', 'Sakit');
+
+
+-- 2. SUNTIKAN DATA KINERJA BURUK BULAN MEI 2026 (Skor < 75)
+INSERT OR IGNORE INTO fact_kinerja (id_karyawan, id_kpi, periode_bulan, pencapaian_aktual) VALUES 
+
+-- Teknologi: Kinerja hancur massal (Akan memicu alarm Flight Risk)
+('EMP-003', 'KPI-TK1', '2026-05', 15), ('EMP-003', 'KPI-TK2', '2026-05', 40), ('EMP-003', 'KPI-TK3', '2026-05', 70),
+('EMP-007', 'KPI-TK1', '2026-05', 10), ('EMP-007', 'KPI-TK2', '2026-05', 30), ('EMP-007', 'KPI-TK3', '2026-05', 60),
+('EMP-009', 'KPI-TK1', '2026-05', 20), ('EMP-009', 'KPI-TK2', '2026-05', 50), ('EMP-009', 'KPI-TK3', '2026-05', 80),
+
+-- Keuangan: Akurasi hancur (Akan memicu alarm Human Error / Audit Risk)
+('EMP-004', 'KPI-KU1', '2026-05', 50), ('EMP-004', 'KPI-KU2', '2026-05', 50), ('EMP-004', 'KPI-KU3', '2026-05', 100),
+('EMP-010', 'KPI-KU1', '2026-05', 40), ('EMP-010', 'KPI-KU2', '2026-05', 40), ('EMP-010', 'KPI-KU3', '2026-05', 80),
+
+-- (Pengisi data pelengkap agar divisi lain tidak bernilai kosong/NaN di bulan Mei)
+('EMP-001', 'KPI-OP1', '2026-05', 900), ('EMP-001', 'KPI-OP2', '2026-05', 900), ('EMP-001', 'KPI-OP3', '2026-05', 100),
+('EMP-002', 'KPI-MK1', '2026-05', 400), ('EMP-002', 'KPI-MK2', '2026-05', 15),  ('EMP-002', 'KPI-MK3', '2026-05', 8),
+('EMP-005', 'KPI-ST1', '2026-05', 40),  ('EMP-005', 'KPI-ST2', '2026-05', 50),  ('EMP-005', 'KPI-ST3', '2026-05', 2);

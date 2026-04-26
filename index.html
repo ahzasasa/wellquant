@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>WellQuant: Enterprise Dashboard</title>
+    <title>WellQuant</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link rel="stylesheet" href="style.css">
@@ -35,8 +35,8 @@
         <div class="user-profile">
             <div class="avatar">A</div>
             <div class="user-info">
-                <strong>Orang Gabut</strong>
-                <span>Akses FREE WKWKW</span>
+                <strong>Monte Carlo</strong>
+                <span>Administrator</span>
             </div>
         </div>
     </div>
@@ -119,7 +119,7 @@
                             <canvas id="barEfisiensi"></canvas>
                         </div>
                     </div>
-                    <div class="panel">
+                    <div class="panel" style="grid-column: 1 / -1; width: 100%;">
                         <h3 class="section-title">Area Risiko Tinggi & Rekomendasi</h3>
                         <table class="risk-table">
                             <thead>
@@ -158,7 +158,7 @@
                     <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px;">
                         <div>
                             <h3 class="section-title" style="margin-bottom: 5px;">Heatmap Ketidakhadiran</h3>
-                            <p style="font-size: 0.75rem; color: #8e9ca9; margin-top: 0;">Intensitas warna merah = Anomali ketidakhadiran tinggi.</p>
+                            <p style="font-size: 0.75rem; color: #8e9ca9; margin-top: 0;">Intensitas warna merah = Frekuensi ketidakhadiran tinggi.</p>
                         </div>
                         <div class="month-nav">
                             <button onclick="ubahBulan(-1)" class="btn-nav">❮</button>
@@ -191,7 +191,7 @@
                             <th style="text-align: center;">Akumulasi Hari Absen</th>
                             <th style="text-align: center;">Skor KPI Bulanan</th>
                             <th>Tingkat Keparahan</th>
-                        </tr>
+                            </tr>
                     </thead>
                     <tbody id="tblKaryawanRawan">
                         </tbody>
@@ -203,7 +203,7 @@
             <div class="header">
                 <div>
                     <h1 style="margin: 0; font-size: 1.6rem; color: #01120A;">ROI Calculator</h1>
-                    <p style="margin: 0; color: #8e9ca9; font-size: 0.9rem;">Formulasi Variabel Cost of Absenteeism dan Turnover secara Manual</p>
+                    <p style="margin: 0; color: #8e9ca9; font-size: 0.9rem;">Formulasi Variabel Cost of Absenteeism dan Turnover</p>
                 </div>
             </div>
             
@@ -225,7 +225,7 @@
             </div>
 
             <div id="kalkulator-hasil" class="panel" style="display: none; background-color: #F8FAFC; border: 1px solid #e2e8f0;">
-                <h3 class="section-title" style="color: #237FEA; margin-bottom: 20px;">Hasil Kalkulasi Bebas</h3>
+                <h3 class="section-title" style="color: #237FEA; margin-bottom: 20px;">Hasil Kalkulasi</h3>
                 <div class="kpi-container" style="grid-template-columns: repeat(4, 1fr); gap: 15px; margin-bottom: 0;">
                     <div class="kpi-card" style="padding: 20px; box-shadow: none; border: 1px solid #e2e8f0; width: 100%; box-sizing: border-box;">
                         <div>
