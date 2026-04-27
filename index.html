@@ -262,6 +262,78 @@
                     <p style="margin: 0; color: #8e9ca9; font-size: 0.9rem;">Proyeksi Dinamis dan Rekomendasi Aksi</p>
                 </div>
             </div>
+
+
+
+            <div class="panel">
+                <h3 class="section-title">Simulator Proyeksi Anggaran & Analisis Risiko</h3>
+                <div class="simulasi-container">
+                    
+                    <div class="simulasi-input-box">
+                        <h4 class="simulasi-subtitle">Alokasi Anggaran K3</h4>
+                        
+                        <div class="input-group">
+                            <label>Program EAP (Konseling)</label>
+                            <input type="number" id="simEAP" placeholder="0">
+                        </div>
+                        <div class="input-group">
+                            <label>Perbaikan Ergonomi Fisik</label>
+                            <input type="number" id="simErgonomi" placeholder="0">
+                        </div>
+                        <div class="input-group">
+                            <label>Pelatihan Budaya K3</label>
+                            <input type="number" id="simPelatihan" placeholder="0">
+                        </div>
+            
+                        <h4 class="simulasi-subtitle" style="margin-top: 20px;">Variabel Risiko</h4>
+                        <div class="input-group">
+                            <label>Asumsi Efektivitas Target (%)</label>
+                            <input type="number" id="simEfektivitas" placeholder="0">
+                        </div>
+                        <div class="input-group">
+                            <label>Waktu Implementasi (Bulan)</label>
+                            <input type="number" id="simWaktu" placeholder="0">
+                        </div>
+            
+                        <button class="btn-simulasi" onclick="jalankanSimulasiLanjutan()">Jalankan Simulasi</button>
+                    </div>
+            
+                    <div class="simulasi-output-box">
+                        <h4 class="simulasi-subtitle">Proyeksi Finansial (Moderat)</h4>
+                        
+                        <div class="result-card card-investasi">
+                            <span>Total Investasi K3:</span>
+                            <strong id="outTotalInvestasi">Rp 0</strong>
+                        </div>
+                        <div class="result-card card-savings">
+                            <span>Proyeksi Net Savings:</span>
+                            <strong id="outNetSavingsSim">Rp 0</strong>
+                        </div>
+                        <div class="result-card card-bep">
+                            <span>Estimasi Titik Impas (BEP):</span>
+                            <strong id="outBEPSim">0 Bulan</strong>
+                        </div>
+            
+                        <h4 class="simulasi-subtitle" style="margin-top: 20px;">Stress-Testing: Skenario Risiko</h4>
+                        <div class="table-responsive">
+                            <table class="risk-table">
+                                <thead>
+                                    <tr>
+                                        <th>Skenario</th>
+                                        <th>Tingkat Keberhasilan</th>
+                                        <th>Waktu Balik Modal</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="tabelSkenario">
+                                    </tbody>
+                            </table>
+                        </div>
+                    </div>
+            
+                </div>
+            </div>
+
+
             
             <div class="simulator-box">
                 <h3 style="margin-top: 0; color: #01120A;">Skenario Penurunan Turnover</h3>

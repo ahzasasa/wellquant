@@ -756,3 +756,93 @@ function hitungAnalitikDivisi(prefixCari) {
 
     return hasilDivisi;
 }
+
+
+// ==============================================================
+// FUNGSI SIMULATOR: ANALISIS WHAT-IF & STRESS-TESTING
+// ==============================================================
+
+function jalankanSimulasiLanjutan() {
+    // 1. Ambil Data Input dari Pengguna
+    const eap = parseFloat(document.getElementById('simEAP').value) || 0;
+    const ergonomi = parseFloat(document.getElementById('simErgonomi').value) || 0;
+    const pelatihan = parseFloat(document.getElementById('simPelatihan').value) || 0;
+    const targetEfektivitas = parseFloat(document.getElementById('simEfektivitas').value) || 0;
+    const waktuImplementasi = parseFloat(document.getElementById('simWaktu').value) || 0;
+
+    // 2. Kalkulasi Total Modal (Capital Allocation)
+    const totalInvestasi = eap + ergonomi + pelatihan;
+
+    // Asumsi Total Cost of Inaction (COI) Tahunan perusahaan (misal Rp 16.8 Miliar)
+    // Di aplikasi nyata, angka ini bisa diambil dari fungsi hitungROI() sebelumnya.
+    const COI_TAHUNAN = 16800000000; 
+
+    // 3. Kalkulasi Skenario Moderat (Sesuai Target)
+    const grossSavings = COI_TAHUNAN * (targetEfektivitas / 100);
+    const netSavings = grossSavings - totalInvestasi;
+    
+    // Perhitungan BEP (Bulan) + Waktu Jeda Implementasi (Time-Lag)
+    let bepFinansial = grossSavings > 0 ? (totalInvestasi / grossSavings) * 12 : 0;
+    let totalBEP = bepFinansial + waktuImplementasi;
+
+    // Fungsi Format Rupiah lokal
+    const formatRp = (angka) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(angka);
+
+    // 4. Perbarui Antarmuka (Kolom Hasil Utama)
+    document.getElementById('outTotalInvestasi').innerText = formatRp(totalInvestasi);
+    document.getElementById('outNetSavingsSim').innerText = formatRp(netSavings);
+    document.getElementById('outBEPSim').innerText = totalBEP.toFixed(1) + " Bulan";
+
+    // 5. Bangun Matriks Skenario Risiko (Stress-Testing)
+    const tbodySkenario = document.getElementById('tabelSkenario');
+    let htmlSkenario = "";
+
+    // Array 3 Skenario Prediktif (Optimis, Moderat, Pesimis)
+    const daftarSkenario = [
+        { nama: "Optimis", warna: "#2ecc71", efekModifikasi: 10 },  // +10% melebihi target
+        { nama: "Moderat", warna: "#f39c12", efekModifikasi: 0 },   // Sesuai target
+        { nama: "Pesimis", warna: "#e74c3c", efekModifikasi: -15 }  // -15% anjlok dari target
+    ];
+
+    daftarSkenario.forEach(sk => {
+        // PERBAIKAN LOGIKA: Hanya tambahkan efek modifikasi JIKA target > 0
+        let persenAktual = 0;
+        if (targetEfektivitas > 0) {
+            persenAktual = targetEfektivitas + sk.efekModifikasi;
+        }
+        
+        // Pastikan tidak ada persentase negatif
+        if (persenAktual < 0) persenAktual = 0; 
+
+        // Hitung ulang keuangan untuk skenario ini
+        let scGross = COI_TAHUNAN * (persenAktual / 100);
+        let scBEP = scGross > 0 ? (totalInvestasi / scGross) * 12 : 0;
+        let scTotalBEP = scBEP + waktuImplementasi;
+
+        // Validasi: Jika penghematan lebih kecil dari modal = Rugi (Sunk Cost)
+        // Jika input masih kosong (Total Investasi 0), tampilkan 0.0 Bulan
+        let teksHasilBEP = "0.0 Bulan"; 
+        
+        if (totalInvestasi > 0) {
+            if (scGross >= totalInvestasi) {
+                teksHasilBEP = `<span style="color: #2c3e50; font-weight: bold;">${scTotalBEP.toFixed(1)} Bulan</span>`;
+            } else {
+                teksHasilBEP = `<span style="color: #e74c3c; font-weight: bold;">Gagal Balik Modal (Rugi)</span>`;
+            }
+        }
+
+        // Susun baris tabel HTML
+        htmlSkenario += `
+            <tr>
+                <td style="font-weight: bold; color: ${sk.warna};">${sk.nama}</td>
+                <td style="text-align: center; font-weight: bold;">${persenAktual}%</td>
+                <td style="text-align: right;">${teksHasilBEP}</td>
+            </tr>
+        `;
+    });
+
+    tbodySkenario.innerHTML = htmlSkenario;
+}
+
+// Pastikan simulasi langsung berjalan 1x saat web pertama kali dibuka
+window.addEventListener('load', jalankanSimulasiLanjutan);

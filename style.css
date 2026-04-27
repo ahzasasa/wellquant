@@ -585,3 +585,113 @@ body {
     background: #e2e8f0; 
     color: #01120A;
  }
+
+ /* =========================================
+   DESAIN PANEL SIMULATOR WELLQUANT
+========================================= */
+
+.simulasi-container {
+    display: flex;
+    gap: 25px;
+    flex-wrap: wrap;
+    margin-top: 15px;
+}
+
+.simulasi-input-box, .simulasi-output-box {
+    flex: 1;
+    min-width: 320px;
+}
+
+.simulasi-input-box {
+    background-color: #f8f9fa;
+    padding: 20px;
+    border-radius: 10px;
+    border: 1px solid #e0e0e0;
+}
+
+.simulasi-subtitle {
+    margin-top: 0;
+    margin-bottom: 15px;
+    color: #2c3e50;
+    font-size: 1.1rem;
+    border-bottom: 2px solid #ecf0f1;
+    padding-bottom: 5px;
+}
+
+.input-group {
+    margin-bottom: 12px;
+}
+
+.input-group label {
+    display: block;
+    font-size: 0.9rem;
+    color: #34495e;
+    margin-bottom: 5px;
+    font-weight: 500;
+}
+
+.input-group input {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #bdc3c7;
+    border-radius: 6px;
+    font-size: 1rem;
+    transition: border-color 0.3s;
+}
+
+.input-group input:focus {
+    border-color: #3498db;
+    outline: none;
+}
+
+.btn-simulasi {
+    width: 100%;
+    background-color: #2980b9;
+    color: white;
+    border: none;
+    padding: 12px;
+    font-size: 1rem;
+    font-weight: bold;
+    border-radius: 6px;
+    cursor: pointer;
+    margin-top: 10px;
+    transition: background-color 0.3s ease, transform 0.1s ease;
+}
+
+.btn-simulasi:hover {
+    background-color: #1f618d;
+}
+
+.btn-simulasi:active {
+    transform: scale(0.98);
+}
+
+/* KOTAK HASIL OUTPUT */
+.result-card {
+    padding: 15px;
+    border-radius: 8px;
+    margin-bottom: 15px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+}
+
+.result-card span {
+    font-size: 0.95rem;
+    color: #555;
+}
+
+.result-card strong {
+    font-size: 1.25rem;
+    color: #2c3e50;
+}
+
+.card-investasi { background-color: #fdfefe; border-left: 5px solid #95a5a6; }
+.card-savings { background-color: #e8f8f5; border-left: 5px solid #1abc9c; }
+.card-bep { background-color: #fef9e7; border-left: 5px solid #f1c40f; }
+
+.table-responsive {
+    overflow-x: auto;
+    width: 100%;
+}
