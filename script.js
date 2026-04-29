@@ -1,6 +1,18 @@
 // 1. STATE GLOBAL
 let chartInstances = {};
-let isCalculatorSynced = false; 
+let isCalculatorSynced = false;
+let globalCA = 0;
+let globalCT = 0;
+let globalCOI = 0;
+let globalEfektivitas = 0;
+let globalInvestasi = 0;
+
+// Asumsi
+const dataHistoris2025 = {
+    tahun: 2025,
+    CostOfAbsenteeism: 15500000000, // Rp 15,5 Miliar (data aktual tahun lalu)
+    CostOfTurnover: 3200000000      // Rp 3,2 Miliar (data aktual tahun lalu)
+};
 
 // 2. FUNGSI UTILITAS UMUM
 function formatRupiah(angka) {
@@ -55,7 +67,7 @@ function syncToCalculatorInputs(data) {
     const hariAbsen = data.metrik_absensi.total_hari_absen;
     const defisitUpah = data.metrik_absensi.defisit_upah_rupiah;
 
-    const absensiRate = populasi > 0 ? (hariAbsen / (240 * populasi)) * 100 : 0; 
+    const absensiRate = populasi > 0 ? (hariAbsen / (264 * populasi)) * 100 : 0; 
     const turnoverRate = populasi > 0 ? (resign / populasi) * 100 : 0;
     const rataGajiHarian = hariAbsen > 0 ? (defisitUpah / hariAbsen) : 250000;
     
@@ -81,7 +93,7 @@ function updateDashboardFaktual(data) {
 
     const CA = defisitUpah + (defisitUpah * 0.5); 
     const CT = resign * biayaRekrutmen; 
-    const absensiRate = populasi > 0 ? (hariAbsen / (240 * populasi)) * 100 : 0;
+    const absensiRate = populasi > 0 ? (hariAbsen / (264 * populasi)) * 100 : 0;
     const turnoverRate = populasi > 0 ? (resign / populasi) * 100 : 0;
 
     const hematRekrutmen = CT * 0.15;
@@ -186,10 +198,33 @@ function renderEfisiensiProgram() {
     destroyChart(canvasId);
     chartInstances[canvasId] = new Chart(ctx, {
         type: 'bar',
-        data: {
-            labels: ['Konseling EAP', 'Program RTW', 'Ergonomis', 'Subsidi Gym'],
-            datasets: [{ data: [85000000, 60000000, 35000000, 15000000], backgroundColor: '#08C7E1', borderRadius: 4, barPercentage: 0.6 }]
-        },
+    data: {
+        labels: [
+            'EAP Counselling',
+            'RTW Programs', 
+            'Lunch at Office', 
+            'Training Day', 
+            'Gym and Fitness',
+            'Office Ergonomics'
+        ],
+        datasets: [{
+            label: 'Tingkat Efektivitas (%)',
+            
+            // 2. Asumsi: persentase bobot keberhasilan yang kita pasang di simulator
+            data: [10.0, 10.5, 15.5, 8.0, 7.0, 6.0], 
+            
+            backgroundColor: [
+                '#00cec9',
+                '#00cec9',
+                '#00cec9',
+                '#00cec9',
+                '#00cec9',
+                '#00cec9'
+            ],
+            borderRadius: 4,
+            barThickness: 15
+        }]
+    },
         options: {
             indexAxis: 'y', responsive: true, maintainAspectRatio: false,
             scales: { 
@@ -303,8 +338,12 @@ function hitungKalkulatorManual() {
     const CT = ((turnoverPct / 100) * jmlKaryawan) * biayaRekrutmen;
     const COI = CA + CT;
 
-    const totalPenghematan = (CT * 0.10) + (CA * 0.10);
-    const ROI = investasi > 0 ? ((totalPenghematan - investasi) / investasi) * 100 : 0;
+    globalCA = CA;
+    globalCT = CT;
+    globalCOI = COI;
+
+    const totalPenghematan = (CT * 0.2) + (CA * 0.3);
+    const ROI = investasi > 0 ? (totalPenghematan / investasi) * 100 : 0;
 
     const panelHasil = document.getElementById('kalkulator-hasil');
     if (panelHasil) {
@@ -668,7 +707,7 @@ function renderTabelDinamis() {
         let isAbsenBuruk = (absenNum >= 3);
         let keparahan = "";
 
-        // Logika absen dan skor KPI
+        // Absen dan skor KPI
         if (isAbsenBuruk && isKpiBuruk) {
             keparahan = '<span class="badge-kritis" style="color: #e74c3c; font-weight: bold;">Kritis (Absen & Underperform)</span>';
         } else if (isAbsenBuruk) {
@@ -758,91 +797,256 @@ function hitungAnalitikDivisi(prefixCari) {
 }
 
 
-// ==============================================================
-// FUNGSI SIMULATOR: ANALISIS WHAT-IF & STRESS-TESTING
-// ==============================================================
+// Simulator
 
 function jalankanSimulasiLanjutan() {
-    // 1. Ambil Data Input dari Pengguna
-    const eap = parseFloat(document.getElementById('simEAP').value) || 0;
-    const ergonomi = parseFloat(document.getElementById('simErgonomi').value) || 0;
-    const pelatihan = parseFloat(document.getElementById('simPelatihan').value) || 0;
-    const targetEfektivitas = parseFloat(document.getElementById('simEfektivitas').value) || 0;
-    const waktuImplementasi = parseFloat(document.getElementById('simWaktu').value) || 0;
+    // Fungsi anti-NaN
+    const ambilAngka = (id) => {
+        const elemen = document.getElementById(id);
+        if (!elemen || elemen.value === undefined || elemen.value === '') return 0;
+        let nilai = parseFloat(elemen.value);
+        return isNaN(nilai) ? 0 : nilai;
+    };
 
-    // 2. Kalkulasi Total Modal (Capital Allocation)
-    const totalInvestasi = eap + ergonomi + pelatihan;
+    // 1. Ekstraksi dengan ID yang baru disinkronkan
+    let eap = ambilAngka('simEAP');
+    let rtw = ambilAngka('simRTW');
+    let gizi = ambilAngka('simGizi');
+    let pelatihan = ambilAngka('simPelatihan');
+    let fisik = ambilAngka('simFisik');
+    let ergonomi = ambilAngka('simErgonomi');
 
-    // Asumsi Total Cost of Inaction (COI) Tahunan perusahaan (misal Rp 16.8 Miliar)
-    // Di aplikasi nyata, angka ini bisa diambil dari fungsi hitungROI() sebelumnya.
-    const COI_TAHUNAN = 16800000000; 
+    let inflasiGaji = ambilAngka('simKenaikanGaji');
+    let risikoEksternal = ambilAngka('simRisiko');
+    let waktuImplementasi = ambilAngka('simWaktu') || 12; 
 
-    // 3. Kalkulasi Skenario Moderat (Sesuai Target)
-    const grossSavings = COI_TAHUNAN * (targetEfektivitas / 100);
-    const netSavings = grossSavings - totalInvestasi;
+    // 2. Kalkulasi Modal
+    const totalInvestasi = eap + rtw + gizi + pelatihan + fisik + ergonomi;
+    globalInvestasi = totalInvestasi; 
+
+    // 3. Kalkulasi Efektivitas
+    let histEAP = eap > 0 ? 12.0 : 0;
+    let histRTW = rtw > 0 ? 8.0 : 0;
+    let histGizi = gizi > 0 ? 7.0 : 0;
+    let histPelatihan = pelatihan > 0 ? 8.5 : 0;
+    let histFisik = fisik > 0 ? 6.0 : 0;
+    let histErgonomi = ergonomi > 0 ? 10.5 : 0;
+
+    let efektivitasKasar = histEAP + histRTW + histGizi + histPelatihan + histFisik + histErgonomi;
+    let targetEfektivitas = efektivitasKasar * (1 - (risikoEksternal / 100));
     
-    // Perhitungan BEP (Bulan) + Waktu Jeda Implementasi (Time-Lag)
-    let bepFinansial = grossSavings > 0 ? (totalInvestasi / grossSavings) * 12 : 0;
-    let totalBEP = bepFinansial + waktuImplementasi;
+    document.getElementById('autoEfektivitas').innerText = targetEfektivitas.toFixed(1) + "%";
+    globalEfektivitas = targetEfektivitas;
 
-    // Fungsi Format Rupiah lokal
-    const formatRp = (angka) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(angka);
+    // 4. Kalkulasi Penghematan
+    let CA_Sim = (typeof globalCA !== 'undefined' && globalCA > 0) ? globalCA : 15500000000; 
+    let CT_Sim = (typeof globalCT !== 'undefined' && globalCT > 0) ? globalCT : 3200000000;
+    let baseCOI = CA_Sim + CT_Sim; 
 
-    // 4. Perbarui Antarmuka (Kolom Hasil Utama)
-    document.getElementById('outTotalInvestasi').innerText = formatRp(totalInvestasi);
-    document.getElementById('outNetSavingsSim').innerText = formatRp(netSavings);
-    document.getElementById('outBEPSim').innerText = totalBEP.toFixed(1) + " Bulan";
+    let inflatedCOI = baseCOI * (1 + (inflasiGaji / 100));
+    const grossSavings = inflatedCOI * (targetEfektivitas / 100);
+    const netSavings = grossSavings - totalInvestasi;
 
-    // 5. Bangun Matriks Skenario Risiko (Stress-Testing)
-    const tbodySkenario = document.getElementById('tabelSkenario');
-    let htmlSkenario = "";
+    // 5. Kalkulasi BEP
+    let bepBulan = 0;
+    if (grossSavings > 0) {
+        let penghematanBulanan = grossSavings / 12;
+        bepBulan = (totalInvestasi / penghematanBulanan) + waktuImplementasi;
+    }
 
-    // Array 3 Skenario Prediktif (Optimis, Moderat, Pesimis)
-    const daftarSkenario = [
-        { nama: "Optimis", warna: "#2ecc71", efekModifikasi: 10 },  // +10% melebihi target
-        { nama: "Moderat", warna: "#f39c12", efekModifikasi: 0 },   // Sesuai target
-        { nama: "Pesimis", warna: "#e74c3c", efekModifikasi: -15 }  // -15% anjlok dari target
-    ];
+    // 6. Cetak ke HTML (Menggunakan ID Output yang benar)
+    const formatRupiah = (angka) => {
+        if (isNaN(angka)) return "Rp 0";
+        return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(angka);
+    };
 
-    daftarSkenario.forEach(sk => {
-        // PERBAIKAN LOGIKA: Hanya tambahkan efek modifikasi JIKA target > 0
-        let persenAktual = 0;
-        if (targetEfektivitas > 0) {
-            persenAktual = targetEfektivitas + sk.efekModifikasi;
-        }
-        
-        // Pastikan tidak ada persentase negatif
-        if (persenAktual < 0) persenAktual = 0; 
+    document.getElementById('outTotalInvestasi').innerText = formatRupiah(totalInvestasi);
+    document.getElementById('outNetSavingsSim').innerText = formatRupiah(netSavings);
+    document.getElementById('outBEPSim').innerText = (bepBulan > 0 && !isNaN(bepBulan)) ? bepBulan.toFixed(1) + " Bulan" : "Tidak Impas";
 
-        // Hitung ulang keuangan untuk skenario ini
-        let scGross = COI_TAHUNAN * (persenAktual / 100);
-        let scBEP = scGross > 0 ? (totalInvestasi / scGross) * 12 : 0;
-        let scTotalBEP = scBEP + waktuImplementasi;
-
-        // Validasi: Jika penghematan lebih kecil dari modal = Rugi (Sunk Cost)
-        // Jika input masih kosong (Total Investasi 0), tampilkan 0.0 Bulan
-        let teksHasilBEP = "0.0 Bulan"; 
-        
-        if (totalInvestasi > 0) {
-            if (scGross >= totalInvestasi) {
-                teksHasilBEP = `<span style="color: #2c3e50; font-weight: bold;">${scTotalBEP.toFixed(1)} Bulan</span>`;
-            } else {
-                teksHasilBEP = `<span style="color: #e74c3c; font-weight: bold;">Gagal Balik Modal (Rugi)</span>`;
-            }
-        }
-
-        // Susun baris tabel HTML
-        htmlSkenario += `
+    // (Opsional) Update tabel skenario jika ada
+    let tb = document.getElementById('tabelSkenario');
+    if(tb) {
+        tb.innerHTML = `
             <tr>
-                <td style="font-weight: bold; color: ${sk.warna};">${sk.nama}</td>
-                <td style="text-align: center; font-weight: bold;">${persenAktual}%</td>
-                <td style="text-align: right;">${teksHasilBEP}</td>
+                <td style="color: #2ecc71; font-weight: bold;">Optimis</td>
+                <td>${(targetEfektivitas + 10).toFixed(1)}%</td>
+                <td>${(bepBulan * 0.8).toFixed(1)} Bulan</td>
+            </tr>
+            <tr>
+                <td style="color: #f39c12; font-weight: bold;">Moderat</td>
+                <td>${targetEfektivitas.toFixed(1)}%</td>
+                <td>${bepBulan.toFixed(1)} Bulan</td>
+            </tr>
+            <tr>
+                <td style="color: #e74c3c; font-weight: bold;">Pesimis</td>
+                <td>${(targetEfektivitas - 15 > 0 ? targetEfektivitas - 15 : 0).toFixed(1)}%</td>
+                <td>${(bepBulan * 1.5).toFixed(1)} Bulan</td>
             </tr>
         `;
-    });
-
-    tbodySkenario.innerHTML = htmlSkenario;
+    }
 }
 
-// Pastikan simulasi langsung berjalan 1x saat web pertama kali dibuka
 window.addEventListener('load', jalankanSimulasiLanjutan);
+
+
+// Reset atau kosongkan form simulator
+function resetSimulasi() {
+    // 1. Kosongkan semua input Alokasi Anggaran
+    document.getElementById('simEAP').value = '';
+    document.getElementById('simRTW').value = '';
+    document.getElementById('simGizi').value = '';
+    document.getElementById('simPelatihan').value = '';
+    document.getElementById('simFisik').value = '';
+    document.getElementById('simErgonomi').value = '';
+
+    // 2. Kembalikan nilai default Variabel Risiko
+    document.getElementById('simKenaikanGaji').value = '0';
+    document.getElementById('simRisiko').value = '0';
+    document.getElementById('simWaktu').value = '12';
+
+    // 3. Reset visual angka kembali ke 0
+    let elEfektivitas = document.getElementById('autoEfektivitas');
+    if (elEfektivitas) elEfektivitas.innerText = '0%';
+
+    document.getElementById('outTotalInvestasi').innerText = 'Rp 0';
+    document.getElementById('outNetSavingsSim').innerText = 'Rp 0';
+    document.getElementById('outBEPSim').innerText = '0 Bulan';
+
+    // 4. Kosongkan tabel stress-testing
+    let tb = document.getElementById('tabelSkenario');
+    if(tb) tb.innerHTML = '';
+
+    // 5. Kembalikan global efektivitas ke 0 dan update grafik visual
+    globalEfektivitas = 0;
+    const slider = document.getElementById('sliderTurnover');
+    if(slider) {
+        slider.value = 0; 
+    }
+    
+    // Refresh visualisasi grafik jika fungsi tersebut ada
+    if (typeof updateVisualisasi === "function") {
+        updateVisualisasi();
+    }
+}
+
+
+// FUNGSI VISUALISASI INTERAKTIF & RECOMMENDER
+
+function updateVisualisasi() {
+    const slider = document.getElementById('sliderTurnover');
+    const persenReduksiTurnover = parseFloat(slider.value) || 0;
+    document.getElementById('valReduksi').innerText = persenReduksiTurnover.toFixed(1) + "%";
+
+    // 1. AMBIL DATA BASELINE (Misal: Historis 2025 atau Real-Time)
+    let CA_Awal = globalCA > 0 ? globalCA : 15500000000; 
+    let CT_Awal = globalCT > 0 ? globalCT : 3200000000;
+    let COI_Awal = CA_Awal + CT_Awal;
+
+    // 2. HITUNG SKENARIO MERAH (Tanpa Intervensi)
+    // Kerugian Murni = Negatif COI
+    let nilaiMerah = -Math.abs(COI_Awal); 
+
+    // 3. HITUNG SKENARIO BIRU (Skenario Intervensi)
+    let penghematanAbsensi = CA_Awal * (globalEfektivitas / 100);
+    let penghematanTurnover = CT_Awal * (persenReduksiTurnover / 100);
+    let totalPenghematan = penghematanAbsensi + penghematanTurnover;
+    
+    // Net Keuntungan/Kerugian Finansial = Uang yang diselamatkan dikurangi Modal
+    let nilaiBiru = totalPenghematan - globalInvestasi;
+
+    // Format Rupiah (Memberikan tanda "+" jika untung, "-" jika rugi)
+    const formatFinansial = (angka) => {
+        let isNegatif = angka < 0;
+        let nilaiAbsolut = Math.abs(angka);
+        let teks = "";
+        
+        if (nilaiAbsolut >= 1000000000) teks = (nilaiAbsolut / 1000000000).toFixed(1) + " M";
+        else if (nilaiAbsolut >= 1000000) teks = (nilaiAbsolut / 1000000).toFixed(1) + " Jt";
+        else teks = nilaiAbsolut.toLocaleString('id-ID');
+
+        return isNegatif ? "- Rp " + teks : "+ Rp " + teks;
+    };
+
+    // 4. LOGIKA KARTESIYUS (Maksimal tinggi area atas/bawah adalah 50%)
+    // Cari angka terbesar untuk menentukan skala 100% dari kanvas
+    let maxRange = Math.max(Math.abs(nilaiMerah), Math.abs(nilaiBiru));
+    if (maxRange === 0) maxRange = 1; // Mencegah pembagian nol
+
+    let barMerah = document.getElementById('barMerah');
+    let lblMerah = document.getElementById('lblMerah');
+    let barBiru = document.getElementById('barBiru');
+    let lblBiru = document.getElementById('lblBiru');
+
+    // -- RENDER BAR MERAH (Selalu ke Bawah / Negatif) --
+    let tinggiMerah = (Math.abs(nilaiMerah) / maxRange) * 32;
+    barMerah.style.top = '50%';
+    barMerah.style.bottom = 'auto';
+    barMerah.style.height = tinggiMerah + '%';
+    barMerah.style.borderRadius = '0 0 6px 6px';
+    lblMerah.innerText = formatFinansial(nilaiMerah);
+    lblMerah.style.top = `calc(50% + ${tinggiMerah}% + 10px)`;
+
+    // -- RENDER TIANG BIRU (Dinamic: Ke Atas jika Untung, Ke Bawah jika Rugi) --
+    let tinggiBiru = (Math.abs(nilaiBiru) / maxRange) * 32;
+    lblBiru.innerText = formatFinansial(nilaiBiru);
+
+    if (nilaiBiru >= 0) {
+        // PERUSAHAAN UNTUNG (Di atas Sumbu X)
+        barBiru.style.bottom = '50%';
+        barBiru.style.top = 'auto';
+        barBiru.style.height = tinggiBiru + '%';
+        barBiru.style.borderRadius = '6px 6px 0 0';
+        barBiru.className = 'bar-kartesius bg-green';
+        lblBiru.style.bottom = `calc(50% + ${tinggiBiru}% + 10px)`;
+        lblBiru.style.top = 'auto';
+        lblBiru.style.color = '#2ecc71';
+    } else {
+        // PERUSAHAAN RUGI (Di bawah Sumbu X)
+        barBiru.style.top = '50%';
+        barBiru.style.bottom = 'auto';
+        barBiru.style.height = tinggiBiru + '%';
+        barBiru.style.borderRadius = '0 0 6px 6px';
+        barBiru.className = 'bar-kartesius bg-blue';
+        lblBiru.style.top = `calc(50% + ${tinggiBiru}% + 10px)`;
+        lblBiru.style.bottom = 'auto';
+        lblBiru.style.color = '#3498db';
+    }
+}
+
+// Jalankan fungsi satu kali saat halaman pertama kali dimuat
+window.addEventListener('load', function() {
+
+    setTimeout(updateVisualisasi, 300);
+});
+
+
+// FUNGSI EVALUASI METRIK DASBOR UTAMA
+
+function evaluasiMetrikDasbor() {
+    // 1. Batas Toleransi Industri
+    const BATAS_TURNOVER = 15.0; 
+    const BATAS_ABSENSI = 2.0;   
+
+    // 2. Angka aktual di layar
+    let elemenAngkaTurnover = document.getElementById('angkaTurnover');
+    if (!elemenAngkaTurnover) return;
+    
+    let aktualTurnover = parseFloat(elemenAngkaTurnover.innerText) || 0;
+
+    // 3. Terapkan Logika Validasi (Ganti Teks dan Warna)
+    let elemenStatusTurnover = document.getElementById('statusTurnover');
+    
+    if (aktualTurnover > BATAS_TURNOVER) {
+        elemenStatusTurnover.innerText = "Di atas batas";
+        elemenStatusTurnover.style.color = "#e74c3c";
+    } else {
+        elemenStatusTurnover.innerText = "Aman (Di bawah batas)";
+        elemenStatusTurnover.style.color = "#2ecc71";
+    }
+}
+
+// Panggil fungsi evaluasi setiap kali halaman dasbor dibuka
+window.addEventListener('load', function() {
+    evaluasiMetrikDasbor();
+});

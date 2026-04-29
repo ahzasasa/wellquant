@@ -74,23 +74,25 @@
                     <div class="kpi-mini-card">
                         <div class="kpi-info">
                             <span class="kpi-label">Tingkat Absensi</span>
-                            <span class="kpi-val" id="dashAbsensi">0%</span>
-                            <span class="kpi-trend negative">Di atas batas</span>
+                            <span class="kpi-val" id="dashAbsensi">0</span>
+                            <span class="kpi-trend positive">Di bawah batas</span>
                         </div>
                         <div class="kpi-sparkline"><canvas id="sparkAbsensi"></canvas></div>
                     </div>
+                    
                     <div class="kpi-mini-card">
                         <div class="kpi-info">
                             <span class="kpi-label">Tingkat Turnover</span>
-                            <span class="kpi-val" id="dashTurnover">0%</span>
+                            <span class="kpi-val" id="dashTurnover">0</span>
                             <span class="kpi-trend negative">Di atas batas</span>
                         </div>
                         <div class="kpi-sparkline"><canvas id="sparkTurnover"></canvas></div>
                     </div>
+
                     <div class="kpi-mini-card">
                         <div class="kpi-info">
-                            <span class="kpi-label">Well-being ROI</span>
-                            <span class="kpi-val" id="dashROI" style="color: #237FEA;">0%</span>
+                            <span class="kpi-label">Well-Being ROI</span>
+                            <span class="kpi-val" id="dashROI">-83.3%</span>
                             <span class="kpi-trend positive">Proyeksi Final</span>
                         </div>
                         <div class="kpi-sparkline"><canvas id="sparkROI"></canvas></div>
@@ -270,32 +272,62 @@
                 <div class="simulasi-container">
                     
                     <div class="simulasi-input-box">
-                        <h4 class="simulasi-subtitle">Alokasi Anggaran K3</h4>
+                        <h4 class="simulasi-subtitle">Alokasi Anggaran Well-Being</h4>
                         
                         <div class="input-group">
-                            <label>Program EAP (Konseling)</label>
+                            <label>EAP Counselling</label>
                             <input type="number" id="simEAP" placeholder="0">
                         </div>
                         <div class="input-group">
-                            <label>Perbaikan Ergonomi Fisik</label>
-                            <input type="number" id="simErgonomi" placeholder="0">
+                            <label>RTW Programs</label>
+                            <input type="number" id="simRTW" placeholder="0">
                         </div>
                         <div class="input-group">
-                            <label>Pelatihan Budaya K3</label>
+                            <label>Lunch at Office</label>
+                            <input type="number" id="simGizi" placeholder="0">
+                        </div>
+                        <div class="input-group">
+                            <label>Training Day</label>
                             <input type="number" id="simPelatihan" placeholder="0">
                         </div>
-            
-                        <h4 class="simulasi-subtitle" style="margin-top: 20px;">Variabel Risiko</h4>
                         <div class="input-group">
-                            <label>Asumsi Efektivitas Target (%)</label>
-                            <input type="number" id="simEfektivitas" placeholder="0">
+                            <label>Gym and Fitness</label>
+                            <input type="number" id="simFisik" placeholder="0">
                         </div>
+                        <div class="input-group">
+                            <label>Office Ergonomics</label>
+                            <input type="number" id="simErgonomi" placeholder="0">
+                        </div>
+            
+                        <h4 class="simulasi-subtitle" style="margin-top: 20px;">Variabel Risiko & Prediksi</h4>
+            
+                        <div class="input-group">
+                            <label>Tingkat Efektivitas Historis</label>
+                            <div style="padding: 12px; background: #e8f8f5; border: 1px solid #1abc9c; border-radius: 6px; display: flex; justify-content: space-between; align-items: center;">
+                                <span id="autoEfektivitas" style="font-size: 1.25rem; font-weight: bold; color: #16a085;">0%</span>
+                                <span style="font-size: 0.75rem; color: #7f8c8d; text-align: right;">*Dihitung otomatis<br>dari data 2025</span>
+                            </div>
+                        </div>
+
+                        <div class="input-group">
+                            <label>Estimasi Kenaikan Gaji Tahunan (%)</label>
+                            <input type="number" id="simKenaikanGaji" value="0" placeholder="0">
+                        </div>
+                    
+                        <div class="input-group">
+                            <label>Faktor Risiko Eksternal (%)</label>
+                            <input type="number" id="simRisiko" value="0" placeholder="0">
+                        </div>
+
                         <div class="input-group">
                             <label>Waktu Implementasi (Bulan)</label>
-                            <input type="number" id="simWaktu" placeholder="0">
+                            <input type="number" id="simWaktu" value="12" placeholder="0">
                         </div>
-            
-                        <button class="btn-simulasi" onclick="jalankanSimulasiLanjutan()">Jalankan Simulasi</button>
+
+                        <div style="display: flex; gap: 15px; margin-top: 20px;">
+                            <button class="btn-simulasi" style="flex: 1; margin: 0;" onclick="jalankanSimulasiLanjutan()">Jalankan Simulasi</button>
+                            <button class="btn-reset" style="flex: 1; margin: 0;" onclick="resetSimulasi()">Kosongkan Form</button>
+                        </div>
                     </div>
             
                     <div class="simulasi-output-box">
@@ -325,7 +357,7 @@
                                     </tr>
                                 </thead>
                                 <tbody id="tabelSkenario">
-                                    </tbody>
+                                </tbody>
                             </table>
                         </div>
                     </div>
@@ -335,29 +367,52 @@
 
 
             
-            <div class="simulator-box">
-                <h3 style="margin-top: 0; color: #01120A;">Skenario Penurunan Turnover</h3>
-                <label style="color: #4a5568; font-weight: 500;">Proyeksi Reduksi: <span id="valSlider" style="color: #237FEA; font-weight: bold; font-size: 1.1rem;">10</span>%</label>
-                <input type="range" id="sliderTurnover" min="0" max="50" value="10" oninput="updateSlider()" class="custom-slider">
-                <p style="font-size: 0.85rem; color: #7f8c8d; margin: 0;">Analisis pergerakan margin penghematan berdasarkan simulasi persentase retensi.</p>
-            </div>
-
-            <div class="panel" style="margin-top: 30px;">
-                <h3 class="section-title">Komparasi Proyeksi Biaya</h3>
-                <div style="position: relative; height: 300px; width: 100%;">
-                    <canvas id="simulasiChart"></canvas>
+            <div class="panel">
+                <h3 class="section-title">Visualisasi Prediktif & Rekomendasi Aksi</h3>
+            
+                <div class="vis-box">
+                    <h4 class="simulasi-subtitle">Skenario Tingkat Efektivitas</h4>
+                    <p style="margin-bottom: 10px; font-size: 0.95rem;">Tingkat Efektivitas: <span id="valReduksi" style="font-weight: bold; color: #2980b9; font-size: 1.1rem;">10%</span></p>
+                    
+                    <input type="range" id="sliderTurnover" min="0" max="100" value="0" class="custom-slider" oninput="updateVisualisasi()" list="tickmarks">
+                    
+                    <p style="font-size: 0.8rem; color: #7f8c8d; margin-top: 10px;">Analisis pergerakan margin penghematan berdasarkan simulasi persentase retensi.</p>
+                </div>
+            
+                <div class="vis-box" style="margin-top: 20px;">
+                    <h4 class="simulasi-subtitle">Komparasi Proyeksi Biaya</h4>
+                    <div style="font-size: 0.8rem; background: #e8f8f5; color: #16a085; padding: 5px 10px; border-radius: 4px; display: inline-block; margin-bottom: 15px;">
+                        <span id="indikatorData">🔄 Menggunakan Data Historis (2025)</span>
+                    </div>
+                    
+                    <div class="chart-container-cartesian" id="cartesianArea">
+                        <div class="x-axis-line"></div>
+                        <span class="zero-label">Rp 0 (Titik Impas)</span>
+            
+                        <div class="bar-column">
+                            <span class="bar-value val-merah" id="lblMerah">Rp 0</span>
+                            <div class="bar-kartesius bg-red" id="barMerah"></div>
+                            <span class="bar-label-bottom">Tanpa Intervensi</span>
+                        </div>
+                        
+                        <div class="bar-column">
+                            <span class="bar-value val-biru" id="lblBiru">Rp 0</span>
+                            <div class="bar-kartesius" id="barBiru"></div>
+                            <span class="bar-label-bottom">Skenario Intervensi</span>
+                        </div>
+                    </div>
+                </div>
+            
+                <div class="recommender-box" style="margin-top: 20px;">
+                    <div class="recommender-icon">💡</div>
+                    <div class="recommender-content">
+                        <h4 style="margin: 0 0 5px 0; color: #000;">Action Priority Recommender</h4>
+                        <p id="txtRecommender" style="margin: 0; font-size: 0.9rem; color: #555; line-height: 1.5;">
+                            Analisis Simulator: Mengumpulkan data untuk memberikan rekomendasi...
+                        </p>
+                    </div>
                 </div>
             </div>
-
-            <div class="recommender-panel" style="margin-top: 30px;">
-                <div class="recommender-icon">💡</div>
-                <div>
-                    <h3 style="margin-top: 0; font-size: 1.1rem; color: #01120A; margin-bottom: 8px;">Action Priority Recommender</h3>
-                    <p id="txtRekomendasi" style="margin: 0; font-size: 0.95rem; color: #4a5568; line-height: 1.6;">Melakukan evaluasi matriks keputusan...</p>
-                </div>
-            </div>
-        </div>
-
     </div>
 
     <script src="script.js"></script>
