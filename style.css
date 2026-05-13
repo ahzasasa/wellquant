@@ -705,6 +705,7 @@ body {
 .card-investasi { background-color: #fdfefe; border-left: 5px solid #95a5a6; }
 .card-savings { background-color: #e8f8f5; border-left: 5px solid #1abc9c; }
 .card-bep { background-color: #fef9e7; border-left: 5px solid #f1c40f; }
+.card-roi {background-color: #e7fdfe; border-left: 5px solid #50d9ff }
 
 .table-responsive {
     overflow-x: auto;
@@ -894,3 +895,151 @@ body {
 .kpi-trend.positive {
     color: #2ecc71;
 }
+
+
+/* ========================================================= */
+/* GAYA UNTUK PANEL REKOMENDASI CERDAS (AI)                  */
+/* ========================================================= */
+.card-rekomendasi-cerdas {
+    margin-top: 25px;
+    border-left: 5px solid #9b59b6; /* Garis ungu di kiri */
+    background-color: #fcf3ff; /* Latar belakang ungu sangat muda */
+    padding: 15px;
+    border-radius: 8px;
+}
+
+.subtitle-ungu {
+    color: #8e44ad;
+    margin-bottom: 15px;
+    font-weight: bold;
+}
+
+.list-rekomendasi {
+    padding-left: 20px;
+    font-size: 0.95rem;
+    color: #2c3e50;
+    line-height: 1.6;
+    margin-bottom: 0;
+}
+
+.list-rekomendasi li {
+    margin-bottom: 10px; /* Memberi jarak antar poin rekomendasi */
+}
+
+/* ========================================================= */
+/* GAYA UNTUK ACTION PRIORITY RECOMMENDER                    */
+/* ========================================================= */
+.card-action-priority {
+    margin-top: 25px;
+}
+
+.list-prioritas-wadah {
+    display: flex;
+    flex-direction: column;
+    gap: 10px; /* Jarak antar kartu prioritas */
+}
+
+.priority-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 15px;
+    border: 1px solid #eee;
+    border-radius: 8px;
+    background: #fff;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.02); /* Sedikit bayangan agar elegan */
+}
+
+.priority-name {
+    font-weight: bold;
+    color: #2c3e50;
+    font-size: 0.95rem;
+}
+
+.priority-desc {
+    font-size: 0.8rem;
+    color: #7f8c8d;
+    margin-top: 4px;
+}
+
+.badge-priority {
+    padding: 5px 10px;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: bold;
+    color: white;
+    text-align: center;
+    min-width: 100px; /* Memastikan lebar badge seragam */
+}
+
+/* Warna Level Prioritas */
+.badge-high { background-color: #e74c3c; }   /* Merah */
+.badge-medium { background-color: #f39c12; } /* Oranye */
+.badge-low { background-color: #95a5a6; }    /* Abu-abu */
+
+/* ========================================================= */
+/* GAYA GLOBAL UNTUK STATE KOSONG                            */
+/* ========================================================= */
+.teks-kosong {
+    color: #7f8c8d;
+    font-style: italic;
+    font-size: 0.9rem;
+}
+
+
+/* ========================================================= */
+/* MEMPERBAIKI KOTAK INPUT ANGKA (MENCEGAH ERROR SCROLL)     */
+/* ========================================================= */
+/* Chrome, Safari, Edge, Opera */
+input[type=number]::-webkit-inner-spin-button, 
+input[type=number]::-webkit-outer-spin-button { 
+    -webkit-appearance: none; 
+    margin: 0; 
+}
+
+/* Firefox */
+input[type=number] {
+    -moz-appearance: textfield;
+}
+
+
+/* ========================================================= */
+/* DESAIN TOMBOL (KEMBALI KE VERSI FULL-WIDTH)               */
+/* ========================================================= */
+
+.btn-primary {
+    width: 100%; /* Membuatnya kembali penuh dari ujung ke ujung */
+    background-color: #3498db; /* Warna biru khas tombol lama Anda */
+    color: white;
+    padding: 12px;
+    border: none;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: bold;
+    cursor: pointer;
+    margin-bottom: 12px; /* Memberi jarak renggang dengan tombol Hapus di bawahnya */
+    transition: background-color 0.3s ease;
+}
+
+.btn-primary:hover {
+    background-color: #2980b9; /* Efek menggelap saat disorot mouse */
+}
+
+.btn-secondary {
+    width: 100%; /* Membuatnya sejajar dengan lebar tombol utama */
+    background-color: transparent; /* Latar belakang tembus pandang */
+    color: #95a5a6; /* Teks abu-abu */
+    padding: 10px;
+    border: 1px solid #bdc3c7; /* Garis pinggir tipis yang elegan */
+    border-radius: 8px;
+    font-size: 0.9rem;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.btn-secondary:hover {
+    background-color: #f1f2f6; /* Efek abu-abu muda saat disorot mouse */
+    color: #7f8c8d;
+}
+

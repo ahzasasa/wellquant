@@ -10,8 +10,8 @@ let globalInvestasi = 0;
 // Asumsi
 const dataHistoris2025 = {
     tahun: 2025,
-    CostOfAbsenteeism: 15500000000, // Rp 15,5 Miliar (data aktual tahun lalu)
-    CostOfTurnover: 3200000000      // Rp 3,2 Miliar (data aktual tahun lalu)
+    CostOfAbsenteeism: 3000000000, // Rp 3 Miliar (data aktual tahun lalu)
+    CostOfTurnover: 2000000000      // Rp 2 Miliar (data aktual tahun lalu)
 };
 
 // 2. FUNGSI UTILITAS UMUM
@@ -800,7 +800,7 @@ function hitungAnalitikDivisi(prefixCari) {
 // Simulator
 
 function jalankanSimulasiLanjutan() {
-    // Fungsi anti-NaN
+    // Fungsi anti-NaN (Agar kalau kosong dihitung 0)
     const ambilAngka = (id) => {
         const elemen = document.getElementById(id);
         if (!elemen || elemen.value === undefined || elemen.value === '') return 0;
@@ -808,7 +808,7 @@ function jalankanSimulasiLanjutan() {
         return isNaN(nilai) ? 0 : nilai;
     };
 
-    // 1. Ekstraksi dengan ID yang baru disinkronkan
+    // 1. Ekstraksi input dari form
     let eap = ambilAngka('simEAP');
     let rtw = ambilAngka('simRTW');
     let gizi = ambilAngka('simGizi');
@@ -820,9 +820,9 @@ function jalankanSimulasiLanjutan() {
     let risikoEksternal = ambilAngka('simRisiko');
     let waktuImplementasi = ambilAngka('simWaktu') || 12; 
 
-    // 2. Kalkulasi Modal
+    // 2. Kalkulasi Modal (HANYA DIDEKLARASIKAN SATU KALI DI SINI)
     const totalInvestasi = eap + rtw + gizi + pelatihan + fisik + ergonomi;
-    globalInvestasi = totalInvestasi; 
+    if (typeof globalInvestasi !== 'undefined') globalInvestasi = totalInvestasi; 
 
     // 3. Kalkulasi Efektivitas
     let histEAP = eap > 0 ? 12.0 : 0;
@@ -833,15 +833,23 @@ function jalankanSimulasiLanjutan() {
     let histErgonomi = ergonomi > 0 ? 10.5 : 0;
 
     let efektivitasKasar = histEAP + histRTW + histGizi + histPelatihan + histFisik + histErgonomi;
-    let targetEfektivitas = efektivitasKasar * (1 - (risikoEksternal / 100));
     
-    document.getElementById('autoEfektivitas').innerText = targetEfektivitas.toFixed(1) + "%";
-    globalEfektivitas = targetEfektivitas;
+    let targetEfektivitas = 0;
+    
+    if (totalInvestasi > 0) {
+        let kalkulasiKotor = efektivitasKasar * (1 - (risikoEksternal / 100));
+        targetEfektivitas = parseFloat(kalkulasiKotor.toFixed(1)); 
+    }
+    
+    let elAutoEfek = document.getElementById('autoEfektivitas');
+    if (elAutoEfek) elAutoEfek.innerText = targetEfektivitas.toFixed(1) + "%";
+    
+    if (typeof globalEfektivitas !== 'undefined') globalEfektivitas = targetEfektivitas;
 
-    // 4. Kalkulasi Penghematan
-    let CA_Sim = (typeof globalCA !== 'undefined' && globalCA > 0) ? globalCA : 15500000000; 
-    let CT_Sim = (typeof globalCT !== 'undefined' && globalCT > 0) ? globalCT : 3200000000;
-    let baseCOI = CA_Sim + CT_Sim; 
+    // 4. Kalkulasi Penghematan (SKALA 5 MILIAR)
+    let CA_Sim = (typeof globalCA !== 'undefined' && globalCA > 0) ? globalCA : 3000000000; // Rp 3 Miliar
+    let CT_Sim = (typeof globalCT !== 'undefined' && globalCT > 0) ? globalCT : 2000000000; // Rp 2 Miliar
+    let baseCOI = CA_Sim + CT_Sim; // Total: Rp 5 Miliar
 
     let inflatedCOI = baseCOI * (1 + (inflasiGaji / 100));
     const grossSavings = inflatedCOI * (targetEfektivitas / 100);
@@ -854,37 +862,324 @@ function jalankanSimulasiLanjutan() {
         bepBulan = (totalInvestasi / penghematanBulanan) + waktuImplementasi;
     }
 
-    // 6. Cetak ke HTML (Menggunakan ID Output yang benar)
+    // 6. Cetak ke HTML Utama (Format Rupiah)
     const formatRupiah = (angka) => {
         if (isNaN(angka)) return "Rp 0";
         return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(angka);
     };
 
-    document.getElementById('outTotalInvestasi').innerText = formatRupiah(totalInvestasi);
-    document.getElementById('outNetSavingsSim').innerText = formatRupiah(netSavings);
-    document.getElementById('outBEPSim').innerText = (bepBulan > 0 && !isNaN(bepBulan)) ? bepBulan.toFixed(1) + " Bulan" : "Tidak Impas";
+    let elInv = document.getElementById('outTotalInvestasi');
+    if(elInv) elInv.innerText = formatRupiah(totalInvestasi);
 
-    // (Opsional) Update tabel skenario jika ada
+    let elNet = document.getElementById('outNetSavingsSim');
+    if(elNet) elNet.innerText = formatRupiah(netSavings);
+
+    let elBEP = document.getElementById('outBEPSim');
+    // Fallback rapi: "0 Bulan" jika tidak ada data
+    if(elBEP) elBEP.innerText = (bepBulan > 0 && !isNaN(bepBulan)) ? bepBulan.toFixed(1) + " Bulan" : "0 Bulan";
+
+    // =========================================================
+    // 6.5. KALKULASI ROI UNTUK KOTAK HASIL
+    // =========================================================
+    let elROISim = document.getElementById('outROISim');
+    if (elROISim) {
+        if (totalInvestasi > 0) {
+            let persentaseROI = (netSavings / totalInvestasi) * 100;
+            elROISim.innerText = persentaseROI.toFixed(1) + "%";
+            elROISim.style.color = ""; // Kosongkan agar otomatis kembar dengan atasnya
+        } else {
+            elROISim.innerText = "0.0%";
+            elROISim.style.color = ""; // Kosongkan agar otomatis kembar dengan atasnya
+        }
+    }
+
+    // =========================================================
+    // 7. UPDATE TABEL SKENARIO STRESS-TESTING
+    // =========================================================
+    let optPersen = 0, modPersen = 0, pesPersen = 0;
+    let optBEP = 0, modBEP = 0, pesBEP = 0;
+
+    if (totalInvestasi > 0) {
+        optPersen = targetEfektivitas + 10;
+        modPersen = targetEfektivitas;
+        pesPersen = (targetEfektivitas - 15 > 0) ? targetEfektivitas - 15 : 0;
+
+        optBEP = bepBulan * 0.8;
+        modBEP = bepBulan;
+        pesBEP = bepBulan * 1.5;
+    }
+
     let tb = document.getElementById('tabelSkenario');
     if(tb) {
         tb.innerHTML = `
             <tr>
                 <td style="color: #2ecc71; font-weight: bold;">Optimis</td>
-                <td>${(targetEfektivitas + 10).toFixed(1)}%</td>
-                <td>${(bepBulan * 0.8).toFixed(1)} Bulan</td>
+                <td>${totalInvestasi > 0 ? optPersen.toFixed(1) + '%' : '0.0%'}</td>
+                <td>${totalInvestasi > 0 ? optBEP.toFixed(1) + ' Bulan' : '0 Bulan'}</td>
             </tr>
             <tr>
                 <td style="color: #f39c12; font-weight: bold;">Moderat</td>
-                <td>${targetEfektivitas.toFixed(1)}%</td>
-                <td>${bepBulan.toFixed(1)} Bulan</td>
+                <td>${totalInvestasi > 0 ? modPersen.toFixed(1) + '%' : '0.0%'}</td>
+                <td>${totalInvestasi > 0 ? modBEP.toFixed(1) + ' Bulan' : '0 Bulan'}</td>
             </tr>
             <tr>
                 <td style="color: #e74c3c; font-weight: bold;">Pesimis</td>
-                <td>${(targetEfektivitas - 15 > 0 ? targetEfektivitas - 15 : 0).toFixed(1)}%</td>
-                <td>${(bepBulan * 1.5).toFixed(1)} Bulan</td>
+                <td>${totalInvestasi > 0 ? pesPersen.toFixed(1) + '%' : '0.0%'}</td>
+                <td>${totalInvestasi > 0 ? pesBEP.toFixed(1) + ' Bulan' : '0 Bulan'}</td>
             </tr>
         `;
     }
+
+    // =========================================================
+    // 8. KALKULASI ROI LAMA (Mencegah eror di script lain)
+    // =========================================================
+    let roi = 0;
+    if (totalInvestasi > 0) {
+        roi = (netSavings / totalInvestasi) * 100;
+    }
+
+    let elemenROI = document.getElementById('dashROI');
+    if (elemenROI) {
+        elemenROI.innerText = roi.toFixed(1) + "%";
+        elemenROI.style.color = (roi >= 0) ? "#2ecc71" : "#e74c3c"; 
+    }
+
+    // =========================================================
+    // 9. MESIN REKOMENDASI CERDAS (AI TEKS)
+    // =========================================================
+    if (typeof generateRekomendasi === "function") {
+        generateRekomendasi(eap, rtw, gizi, pelatihan, fisik, ergonomi, roi);
+    }
+
+    // =========================================================
+    // 10. ACTION PRIORITY RECOMMENDER
+    // =========================================================
+    const dataPrograms = [
+        { name: 'EAP Counselling', cost: eap, impact: histEAP },
+        { name: 'RTW Programs', cost: rtw, impact: histRTW },
+        { name: 'Lunch at Office', cost: gizi, impact: histGizi },
+        { name: 'Training Day', cost: pelatihan, impact: histPelatihan },
+        { name: 'Gym and Fitness', cost: fisik, impact: histFisik },
+        { name: 'Office Ergonomics', cost: ergonomi, impact: histErgonomi }
+    ];
+
+    if (typeof updateActionPriority === "function") {
+        updateActionPriority(dataPrograms);
+    }
+
+    // =========================================================
+    // 11. UPDATE GRAFIK
+    // =========================================================
+    if (typeof updateVisualisasi === "function") {
+        updateVisualisasi();
+    }
+}
+
+
+
+// 1. Recomender
+function generateRekomendasi(eap, rtw, gizi, pelatihan, fisik, ergonomi, roi) {
+    let listRekomendasi = document.getElementById('listRekomendasi');
+    if (!listRekomendasi) return;
+
+    let rekomendasi = [];
+    if (eap > 0) rekomendasi.push("<strong>Prioritaskan Program EAP:</strong> Alokasi pada konseling mental terdeteksi. Fokuskan pada departemen berisiko tinggi untuk mencegah efek domino <em>burnout</em>.");
+    else rekomendasi.push("<strong>Saran Strategis:</strong> Anda belum mengalokasikan dana untuk EAP. Secara historis, konseling memiliki daya ungkit tertinggi dalam mencegah <em>turnover</em>.");
+
+    if (ergonomi > 0 && rtw > 0) rekomendasi.push("<strong>Sinergi K3 Fisik:</strong> Kombinasi Ergonomi dan RTW Programs sangat efektif menekan klaim asuransi kesehatan.");
+    else if (ergonomi > 0) rekomendasi.push("<strong>Fokus Ergonomi:</strong> Langkah preventif yang luar biasa untuk menekan tingkat absensi akibat keluhan muskuloskeletal.");
+
+    if (gizi > 0) rekomendasi.push("<strong>Dukungan Nutrisi:</strong> Berdampak instan pada pemulihan jam produktif dan kefokusan karyawan.");
+    if (pelatihan > 0) rekomendasi.push("<strong>Penguatan Budaya:</strong> Pastikan modul aplikatif agar tidak berujung menjadi <em>sunk cost</em>.");
+    if (fisik > 0) rekomendasi.push("<strong>Optimalisasi Anggaran:</strong> Aktivitas Gym memiliki metrik konversi terendah. Pastikan ada survei minat karyawan.");
+
+    if (roi < 0) rekomendasi.push("<span style='color: #e74c3c;'><strong>Peringatan Defisit Finansial:</strong></span> Simulasi merugi. Pangkas program dengan performa terendah.");
+    else if (roi > 100) rekomendasi.push("<span style='color: #2ecc71;'><strong>Skenario Sangat Sehat:</strong></span> Keuntungan berlipat. Kunci skenario ini sebagai draf final ke Manajemen.");
+    else rekomendasi.push("<span style='color: #f39c12;'><strong>Skenario Moderat:</strong></span> Program balik modal, margin bisa dimaksimalkan dengan menggeser dana ke EAP atau Ergonomi.");
+
+    listRekomendasi.innerHTML = ""; 
+    rekomendasi.forEach(teks => {
+        listRekomendasi.innerHTML += `<li style="margin-bottom: 10px;">${teks}</li>`;
+    });
+}
+
+// =========================================================
+// 2. MESIN AI: ACTION PRIORITY RECOMMENDER (BADGE)
+// =========================================================
+function updateActionPriority(programs) {
+    const listContainer = document.getElementById('actionPriorityList');
+    if (!listContainer) return;
+
+    let activePrograms = programs.filter(p => p.cost > 0);
+
+    if (activePrograms.length === 0) {
+        listContainer.innerHTML = `<li class="teks-kosong"><em>Belum ada program yang didanai. Silakan masukkan angka di Simulator.</em></li>`;
+        return;
+    }
+
+    activePrograms.forEach(p => { p.efficiency = p.impact / (p.cost / 10000000); });
+    activePrograms.sort((a, b) => b.efficiency - a.efficiency);
+
+    listContainer.innerHTML = ''; 
+    activePrograms.forEach((p, index) => {
+        let priorityText = '', descText = '', colorHex = '';
+        if (index === 0 || p.impact >= 10) {
+            priorityText = 'High Priority'; descText = 'Quick Win! Dampak retensi tinggi dengan biaya terjustifikasi.'; colorHex = '#e74c3c';
+        } else if (index === activePrograms.length - 1 || p.impact <= 6) {
+            priorityText = 'Low Priority'; descText = 'Tinjau ulang. ROI rendah atau lebih baik dialihkan ke program lain.'; colorHex = '#95a5a6';
+        } else {
+            priorityText = 'Medium Priority'; descText = 'Program pendukung yang solid untuk melengkapi pilar K3.'; colorHex = '#f39c12';
+        }
+        listContainer.innerHTML += `
+            <li style="margin-bottom: 10px;">
+                <strong>${p.name}</strong> <span style="color: ${colorHex}; font-weight: bold;">[${priorityText}]</span>: ${descText}
+            </li>`;
+    });
+}
+
+// =========================================================
+// 3. PENGGERAK OTOMATIS (REACTIVE UI & ANTI-SCROLL ERROR)
+// =========================================================
+// =========================================================
+// FUNGSI HAPUS FORM (BENAR-BENAR MANUAL & MENUNGGU)
+// =========================================================
+function hapusForm() {
+    // 1. Kosongkan semua kotak input
+    const daftarInput = [
+        'simEAP', 'simRTW', 'simGizi', 'simPelatihan', 
+        'simFisik', 'simErgonomi', 'simKenaikanGaji', 
+        'simRisiko', 'simWaktu'
+    ];
+    
+    daftarInput.forEach(id => {
+        const elemen = document.getElementById(id);
+        if (elemen) elemen.value = ""; 
+    });
+
+    // 2. Kembalikan metrik utama ke 0
+    if(document.getElementById('outTotalInvestasi')) document.getElementById('outTotalInvestasi').innerText = "Rp 0";
+    if(document.getElementById('outNetSavingsSim')) document.getElementById('outNetSavingsSim').innerText = "Rp 0";
+    if(document.getElementById('outBEPSim')) document.getElementById('outBEPSim').innerText = "0.0 Bulan";
+    if(document.getElementById('autoEfektivitas')) document.getElementById('autoEfektivitas').innerText = "0.0%";
+    
+    let elemenROI = document.getElementById('dashROI');
+    if (elemenROI) {
+        elemenROI.innerText = "0.0%";
+        elemenROI.style.color = "#7f8c8d"; // Kembali ke abu-abu
+    }
+
+    // 3. Kembalikan Tabel Skenario ke 0% (Tanpa memicu perhitungan AI)
+    let tb = document.getElementById('tabelSkenario');
+    if(tb) {
+        tb.innerHTML = `
+            <tr><td style="color: #2ecc71; font-weight: bold;">Optimis</td><td>0.0%</td><td>0.0 Bulan</td></tr>
+            <tr><td style="color: #f39c12; font-weight: bold;">Moderat</td><td>0.0%</td><td>0.0 Bulan</td></tr>
+            <tr><td style="color: #e74c3c; font-weight: bold;">Pesimis</td><td>0.0%</td><td>0.0 Bulan</td></tr>
+        `;
+    }
+
+    // 4. BUNGKAM MESIN AI: Kembalikan ke teks "Menunggu..."
+    let listRekomendasi = document.getElementById('listRekomendasi');
+    if (listRekomendasi) {
+        listRekomendasi.innerHTML = `<li class="teks-kosong"><em>Menunggu hasil simulasi... Silakan isi alokasi anggaran dan klik "Jalankan Simulasi".</em></li>`;
+    }
+
+    let actionPriorityList = document.getElementById('actionPriorityList');
+    if (actionPriorityList) {
+        actionPriorityList.innerHTML = `<li class="teks-kosong"><em>Menunggu input data alokasi anggaran...</em></li>`;
+    }
+
+    // ... (kode reset lainnya) ...
+    if(document.getElementById('outROISim')) {
+        document.getElementById('outROISim').innerText = "0.0%";
+        document.getElementById('outROISim').style.color = "#2c3e50";
+    }
+    // ==========================================================
+    // 5. UPDATE GRAFIK KE SKALA 500 JUTA (TAMBAHAN BARU)
+    // ==========================================================
+    // Memaksa grafik untuk menggambar ulang dan menampilkan 
+    // pilar merah di angka default (500 Juta) dan hijau di (0)
+    if (typeof updateVisualisasi === "function") {
+        updateVisualisasi(); 
+    }
+
+    console.log("Form, AI, dan Grafik berhasil di-reset ke status menunggu.");
+}
+
+// =========================================================
+// INISIALISASI (TIDAK ADA AUTO-RUN)
+// =========================================================
+document.addEventListener("DOMContentLoaded", function() {
+    const daftarInput = ['simEAP', 'simRTW', 'simGizi', 'simPelatihan', 'simFisik', 'simErgonomi', 'simKenaikanGaji', 'simRisiko', 'simWaktu'];
+    
+    daftarInput.forEach(id => {
+        const elemen = document.getElementById(id);
+        if (elemen) {
+            // Hanya matikan scroll mouse agar angka tidak bocor, tidak ada event 'input'
+            elemen.addEventListener('wheel', function(e) { this.blur(); });
+        }
+    });
+
+    hapusForm();
+});
+
+// =========================================================
+// FUNGSI ACTION PRIORITY RECOMMENDER (UI VERSI LAMA / BULLETS)
+// =========================================================
+function updateActionPriority(programs) {
+    const listContainer = document.getElementById('actionPriorityList');
+    if (!listContainer) return;
+
+    // 1. Filter hanya program yang diisi angkanya
+    let activePrograms = programs.filter(p => p.cost > 0);
+
+    // Jika kosong
+    if (activePrograms.length === 0) {
+        listContainer.innerHTML = `<li class="teks-kosong"><em>Belum ada program yang didanai. Silakan masukkan angka di Simulator.</em></li>`;
+        return;
+    }
+
+    // 2. Hitung Rasio Efisiensi 
+    activePrograms.forEach(p => {
+        p.efficiency = p.impact / (p.cost / 10000000); 
+    });
+
+    // 3. Urutkan Sesuai Prioritas
+    activePrograms.sort((a, b) => b.efficiency - a.efficiency);
+
+    // 4. Cetak ke HTML (Format Bullets)
+    listContainer.innerHTML = ''; 
+
+    activePrograms.forEach((p, index) => {
+        let priorityText = '';
+        let descText = '';
+        let colorHex = '';
+
+        // LOGIKA KECERDASAN BUATAN
+        if (index === 0 || p.impact >= 10) {
+            priorityText = 'High Priority';
+            descText = 'Quick Win! Dampak retensi tinggi dengan biaya terjustifikasi.';
+            colorHex = '#e74c3c'; // Merah
+        } else if (index === activePrograms.length - 1 || p.impact <= 6) {
+            priorityText = 'Low Priority';
+            descText = 'Tinjau ulang. ROI rendah atau lebih baik dialihkan ke program lain.';
+            colorHex = '#95a5a6'; // Abu-abu
+        } else {
+            priorityText = 'Medium Priority';
+            descText = 'Program pendukung yang solid untuk melengkapi pilar K3.';
+            colorHex = '#f39c12'; // Oranye
+        }
+
+        // TAMPILAN BARU: Format paragraf biasa dengan cetak tebal dan warna pada label
+        const itemHTML = `
+            <li style="margin-bottom: 10px;">
+                <strong>${p.name}</strong> 
+                <span style="color: ${colorHex}; font-weight: bold;">[${priorityText}]</span>: 
+                ${descText}
+            </li>
+        `;
+        listContainer.innerHTML += itemHTML;
+    });
 }
 
 window.addEventListener('load', jalankanSimulasiLanjutan);
@@ -939,8 +1234,8 @@ function updateVisualisasi() {
     document.getElementById('valReduksi').innerText = persenReduksiTurnover.toFixed(1) + "%";
 
     // 1. AMBIL DATA BASELINE (Misal: Historis 2025 atau Real-Time)
-    let CA_Awal = globalCA > 0 ? globalCA : 15500000000; 
-    let CT_Awal = globalCT > 0 ? globalCT : 3200000000;
+    let CA_Awal = globalCA > 0 ? globalCA : 3000000000; 
+    let CT_Awal = globalCT > 0 ? globalCT : 2000000000;
     let COI_Awal = CA_Awal + CT_Awal;
 
     // 2. HITUNG SKENARIO MERAH (Tanpa Intervensi)
@@ -1050,3 +1345,45 @@ function evaluasiMetrikDasbor() {
 window.addEventListener('load', function() {
     evaluasiMetrikDasbor();
 });
+
+
+// =========================================================
+// FUNGSI ANALITIK PRESKRIPTIF (VERSI 6 PROGRAM LENGKAP)
+// =========================================================
+// =========================================================
+// 1. MESIN AI: REKOMENDASI CERDAS (TEXT BULLETS)
+// =========================================================
+function generateRekomendasi(eap, rtw, gizi, pelatihan, fisik, ergonomi, roi) {
+    let listRekomendasi = document.getElementById('listRekomendasi');
+    if (!listRekomendasi) return;
+
+    let totalAnggaran = eap + rtw + gizi + pelatihan + fisik + ergonomi;
+
+    // GEMBOK PENGAMAN: Jika Rp 0 dipaksa jalankan simulasi
+    if (totalAnggaran === 0) {
+        listRekomendasi.innerHTML = `<li class="teks-kosong"><em>Data kosong. Silakan masukkan alokasi anggaran terlebih dahulu untuk melihat analisis AI.</em></li>`;
+        return; 
+    }
+
+    let rekomendasi = [];
+    if (eap > 0) rekomendasi.push("<strong>Prioritaskan Program EAP:</strong> Alokasi pada konseling mental terdeteksi. Fokuskan pada departemen berisiko tinggi untuk mencegah efek domino <em>burnout</em>.");
+    else rekomendasi.push("<strong>Saran Strategis:</strong> Anda belum mengalokasikan dana untuk EAP. Secara historis, konseling memiliki daya ungkit tertinggi dalam mencegah <em>turnover</em>.");
+
+    if (ergonomi > 0 && rtw > 0) rekomendasi.push("<strong>Sinergi K3 Fisik:</strong> Kombinasi Ergonomi dan RTW Programs sangat efektif menekan klaim asuransi kesehatan.");
+    else if (ergonomi > 0) rekomendasi.push("<strong>Fokus Ergonomi:</strong> Langkah preventif yang luar biasa untuk menekan tingkat absensi akibat keluhan muskuloskeletal.");
+
+    if (gizi > 0) rekomendasi.push("<strong>Dukungan Nutrisi:</strong> Berdampak instan pada pemulihan jam produktif dan kefokusan karyawan.");
+    if (pelatihan > 0) rekomendasi.push("<strong>Penguatan Budaya:</strong> Pastikan modul aplikatif agar tidak berujung menjadi <em>sunk cost</em>.");
+    if (fisik > 0) rekomendasi.push("<strong>Optimalisasi Anggaran:</strong> Aktivitas Gym memiliki metrik konversi terendah. Pastikan ada survei minat karyawan.");
+
+    if (roi < 0) rekomendasi.push("<span style='color: #e74c3c;'><strong>Peringatan Defisit Finansial:</strong></span> Simulasi merugi. Pangkas program dengan performa terendah.");
+    else if (roi > 100) rekomendasi.push("<span style='color: #2ecc71;'><strong>Skenario Sangat Sehat:</strong></span> Keuntungan berlipat. Kunci skenario ini sebagai draf final ke Manajemen.");
+    else rekomendasi.push("<span style='color: #f39c12;'><strong>Skenario Moderat:</strong></span> Program balik modal, margin bisa dimaksimalkan dengan menggeser dana ke EAP atau Ergonomi.");
+
+    listRekomendasi.innerHTML = ""; 
+    rekomendasi.forEach(teks => {
+        listRekomendasi.innerHTML += `<li style="margin-bottom: 10px;">${teks}</li>`;
+    });
+}
+
+

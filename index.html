@@ -311,22 +311,21 @@
 
                         <div class="input-group">
                             <label>Estimasi Kenaikan Gaji Tahunan (%)</label>
-                            <input type="number" id="simKenaikanGaji" value="0" placeholder="0">
+                            <input type="number" id="simKenaikanGaji" placeholder="0">
                         </div>
                     
                         <div class="input-group">
                             <label>Faktor Risiko Eksternal (%)</label>
-                            <input type="number" id="simRisiko" value="0" placeholder="0">
+                            <input type="number" id="simRisiko" placeholder="0">
                         </div>
 
                         <div class="input-group">
                             <label>Waktu Implementasi (Bulan)</label>
-                            <input type="number" id="simWaktu" value="12" placeholder="0">
-                        </div>
-
-                        <div style="display: flex; gap: 15px; margin-top: 20px;">
-                            <button class="btn-simulasi" style="flex: 1; margin: 0;" onclick="jalankanSimulasiLanjutan()">Jalankan Simulasi</button>
-                            <button class="btn-reset" style="flex: 1; margin: 0;" onclick="resetSimulasi()">Kosongkan Form</button>
+                            <input type="number" id="simWaktu" placeholder="0"> </div>
+                        
+                        <div class="button-group" style="margin-top: 25px;">
+                            <button type="button" class="btn-primary" onclick="jalankanSimulasiLanjutan()">Jalankan Simulasi</button>
+                            <button type="button" class="btn-secondary" onclick="hapusForm()">Hapus Form (Reset)</button>
                         </div>
                     </div>
             
@@ -345,6 +344,11 @@
                             <span>Estimasi Titik Impas (BEP):</span>
                             <strong id="outBEPSim">0 Bulan</strong>
                         </div>
+                        <div class="result-card card-roi">
+                            <span>Proyeksi Return on Investment (ROI):</span>
+                            <strong id="outROISim">0 %</strong>
+                        </div>
+                    
             
                         <h4 class="simulasi-subtitle" style="margin-top: 20px;">Stress-Testing: Skenario Risiko</h4>
                         <div class="table-responsive">
@@ -364,7 +368,6 @@
             
                 </div>
             </div>
-
 
             
             <div class="panel">
@@ -403,14 +406,18 @@
                     </div>
                 </div>
             
-                <div class="recommender-box" style="margin-top: 20px;">
-                    <div class="recommender-icon">💡</div>
-                    <div class="recommender-content">
-                        <h4 style="margin: 0 0 5px 0; color: #000;">Action Priority Recommender</h4>
-                        <p id="txtRecommender" style="margin: 0; font-size: 0.9rem; color: #555; line-height: 1.5;">
-                            Analisis Simulator: Mengumpulkan data untuk memberikan rekomendasi...
-                        </p>
-                    </div>
+                <div style="margin-top: 25px; background: #ffffff; padding: 20px; border-radius: 10px; border: 1px solid #e0e0e0; box-shadow: 0 4px 6px rgba(0,0,0,0.05);">
+                    <h4 style="color: #2c3e50; margin-bottom: 15px; border-bottom: 2px solid #3498db; padding-bottom: 5px; display: inline-block;">
+                        Action Priority Recommender
+                    </h4>
+                    
+                    <p style="font-weight: bold; color: #34495e; margin-bottom: 8px;">
+                        Rekomendasi Tindakan:
+                    </p>
+                
+                    <ul id="listRekomendasi" style="list-style-type: disc; padding-left: 25px; margin-top: 0; color: #2c3e50; line-height: 1.6; font-size: 0.95rem;">
+                        <li class="teks-kosong" style="color: #7f8c8d;"><em>Menunggu hasil simulasi... Silakan isi alokasi anggaran dan klik "Jalankan Simulasi".</em></li>
+                    </ul>
                 </div>
             </div>
     </div>

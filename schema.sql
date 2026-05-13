@@ -1,4 +1,4 @@
--- 1. STRUKTUR TABEL
+-- STRUKTUR TABEL
 
 -- Tabel dimensi karyawan
 CREATE TABLE IF NOT EXISTS dim_karyawan (
